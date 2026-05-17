@@ -17,11 +17,12 @@ export default function CadastroPage() {
     e.preventDefault()
     setLoading(true)
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { nome },
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
       },
     })
     setLoading(false)
@@ -29,9 +30,16 @@ export default function CadastroPage() {
       toast.error(error.message)
       return
     }
+    // Se session for null, o Supabase exige confirmação de email
+    if (!data.session) {
+      toast.success('Conta criada! Verifique seu email para confirmar.')
+      router.push('/login')
+      return
+    }
+    // Session imediata (confirmação desativada no projeto)
     toast.success('Conta criada! Bem-vinda à Vora.')
-    router.push('/onboarding')
     router.refresh()
+    router.push('/onboarding')
   }
 
   return (
