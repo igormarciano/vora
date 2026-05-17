@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vora — Protótipo</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sage: #8FAF8F;
+    --sage-light: #C8DBC8;
+    --sage-pale: #EBF3EB;
+    --sage-deep: #4A7050;
+    --linho: #ECE4DB;
+    --linho-pale: #FAF8F5;
+    --areia: #D6CABF;
+    --areia-dark: #B8A99A;
+    --ink: #2A221C;
+    --ink-soft: #4A4038;
+    --ink-muted: #7A6E66;
+    --terracota: #C47B5A;
+    --terracota-pale: #F5E8E0;
+    --ouro: #B89B6A;
+    --white: #FFFFFF;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: #C9BFAF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: var(--font-body);
+    padding: 24px;
+  }
+
+  /* PHONE SHELL */
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: var(--linho-pale);
+    border-radius: 52px;
+    box-shadow:
+      0 0 0 10px #1a1410,
+      0 0 0 12px #2a2218,
+      0 60px 120px rgba(0,0,0,0.5),
+      inset 0 0 0 1px rgba(255,255,255,0.1);
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  /* NOTCH */
+  .notch {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 34px;
+    background: #1a1410;
+    border-radius: 0 0 22px 22px;
+    z-index: 100;
+  }
+
+  /* SCREENS WRAPPER */
+  .screens {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* EACH SCREEN */
+  .screen {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--linho-pale);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.45s ease;
+    overflow: hidden;
+  }
+  .screen.hidden-right {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .screen.hidden-left {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .screen.active {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    height: 54px;
+    padding: 14px 28px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .status-time {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .status-icons {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .status-icons svg {
+    fill: var(--ink);
+    opacity: 0.8;
+  }
+
+  /* SCROLL CONTENT */
+  .screen-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 28px 40px;
+    scrollbar-width: none;
+  }
+  .screen-content::-webkit-scrollbar { display: none; }
+
+  /* PROGRESS BAR */
+  .progress-wrap {
+    padding: 12px 28px 0;
+    flex-shrink: 0;
+  }
+  .progress-track {
+    height: 3px;
+    background: var(--areia);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--sage);
+    border-radius: 3px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .progress-label {
+    font-size: 11px;
+    color: var(--ink-muted);
+    letter-spacing: 0.08em;
+    margin-top: 8px;
+    text-align: right;
+  }
+
+  /* VORA MASCOT */
+  .vora-mascot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .vora-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--sage-pale);
+    border: 1.5px solid var(--sage-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .vora-bubble {
+    background: var(--white);
+    border: 1px solid var(--areia);
+    border-radius: 16px 16px 16px 4px;
+    padding: 12px 16px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    flex: 1;
+    animation: bubbleIn 0.4s ease both;
+  }
+  @keyframes bubbleIn {
+    from { opacity: 0; transform: translateY(8px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* SECTION HEADER */
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--sage);
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 300;
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+  }
+  h2 em { font-style: italic; color: var(--sage); }
+  .screen-desc {
+    font-size: 14px;
+    color: var(--ink-muted);
+    line-height: 1.65;
+    margin-bottom: 32px;
+  }
+
+  /* INPUT GROUP */
+  .input-group { margin-bottom: 20px; }
+  .input-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+    letter-spacing: 0.02em;
+  }
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .input-prefix {
+    position: absolute;
+    left: 16px;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    pointer-events: none;
+  }
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 16px 16px 16px 40px;
+    border: 1.5px solid var(--areia);
+    border-radius: 14px;
+    font-family: var(--font-body);
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--ink);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+  }
+  input[type="text"]:focus, input[type="number"]:focus {
+    border-color: var(--sage);
+    box-shadow: 0 0 0 3px rgba(143,175,143,0.15);
+  }
+  input.no-prefix {
+    padding-left: 16px;
+  }
+
+  /* CHIPS / QUICK PICKS */
+  .quick-picks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .chip {
+    padding: 8px 16px;
+    border-radius: 100px;
+    border: 1.5px solid var(--areia);
+    font-size: 13px;
+    color: var(--ink-soft);
+    background: var(--white);
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: var(--font-body);
+    font-weight: 400;
+  }
+  .chip:hover, .chip.selected {
+    border-color: var(--sage);
+    background: var(--sage-pale);
+    color: var(--sage-deep);
+  }
+
+  /* EXPENSE ITEMS */
+  .expense-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .expense-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--white);
+    border: 1.5px solid var(--areia);
+    border-radius: 14px;
+    padding: 14px 16px;
+    animation: slideIn 0.3s ease both;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .expense-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--linho);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+  .expense-info { flex: 1; }
+  .expense-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .expense-amount {
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+  .expense-remove {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--linho);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-muted);
+    font-size: 16px;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .expense-remove:hover { background: var(--terracota-pale); color: var(--terracota); }
+
+  /* ADD EXPENSE ROW */
+  .add-expense-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .add-expense-row input {
+    flex: 1;
+    padding: 13px 14px;
+    font-size: 14px;
+  }
+  .add-expense-row input.no-prefix { padding-left: 14px; }
+  .add-expense-row input.amount-input { width: 110px; flex: none; padding-left: 30px; font-size: 14px; }
+  .add-btn {
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    background: var(--sage);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 22px;
+    flex-shrink: 0;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .add-btn:hover { background: var(--sage-deep); }
+  .add-btn:active { transform: scale(0.95); }
+
+  /* CATEGORY SUGGESTIONS */
+  .category-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .cat-card {
+    background: var(--white);
+    border: 1.5px solid var(--areia);
+    border-radius: 14px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .cat-card:hover {
+    border-color: var(--sage);
+    background: var(--sage-pale);
+  }
+  .cat-card.added {
+    border-color: var(--sage);
+    background: var(--sage-pale);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  .cat-emoji { font-size: 20px; }
+  .cat-info {}
+  .cat-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+  .cat-hint { font-size: 11px; color: var(--ink-muted); }
+
+  /* SLIDER */
+  .slider-wrap { margin-bottom: 28px; }
+  .slider-display {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .slider-value {
+    font-family: var(--font-display);
+    font-size: 48px;
+    font-weight: 300;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .slider-value span { font-size: 22px; color: var(--ink-muted); vertical-align: top; margin-top: 8px; display: inline-block; }
+  .slider-desc {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-top: 6px;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--areia);
+    border-radius: 4px;
+    outline: none;
+    margin: 12px 0;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 2px solid var(--sage);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.15); }
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-top: 4px;
+  }
+
+  /* LIFESTYLE CARDS */
+  .lifestyle-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .lifestyle-card {
+    background: var(--white);
+    border: 1.5px solid var(--areia);
+    border-radius: 16px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .lifestyle-card.selected {
+    border-color: var(--sage);
+    background: var(--sage-pale);
+  }
+  .lifestyle-card:hover { border-color: var(--sage-light); }
+  .lifestyle-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: var(--linho);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .lifestyle-card.selected .lifestyle-icon { background: var(--sage-light); }
+  .lifestyle-content { flex: 1; }
+  .lifestyle-title { font-size: 15px; font-weight: 500; color: var(--ink); margin-bottom: 3px; }
+  .lifestyle-desc { font-size: 13px; color: var(--ink-muted); line-height: 1.4; }
+  .lifestyle-amount { font-size: 14px; font-weight: 500; color: var(--sage-deep); }
+  .lifestyle-check {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--areia);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    color: transparent;
+    font-size: 13px;
+  }
+  .lifestyle-card.selected .lifestyle-check {
+    background: var(--sage);
+    border-color: var(--sage);
+    color: white;
+  }
+
+  /* CTA BUTTON */
+  .cta-wrap {
+    padding: 16px 28px 28px;
+    flex-shrink: 0;
+    background: linear-gradient(to top, var(--linho-pale) 70%, transparent);
+  }
+  .btn-primary {
+    width: 100%;
+    padding: 18px;
+    border-radius: 16px;
+    background: var(--sage);
+    color: white;
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: background 0.18s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+  .btn-primary:hover { background: var(--sage-deep); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled {
+    background: var(--areia);
+    color: var(--areia-dark);
+    cursor: not-allowed;
+  }
+  .btn-secondary {
+    width: 100%;
+    padding: 14px;
+    border-radius: 16px;
+    background: transparent;
+    color: var(--ink-muted);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 400;
+    border: none;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: color 0.15s;
+  }
+  .btn-secondary:hover { color: var(--ink); }
+
+  /* BACK BUTTON */
+  .top-nav {
+    padding: 12px 28px 0;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--ink-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    font-family: var(--font-body);
+    transition: color 0.15s;
+  }
+  .back-btn:hover { color: var(--ink); }
+  .back-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  /* SUMMARY CARD */
+  .summary-card {
+    background: var(--white);
+    border: 1.5px solid var(--areia);
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--linho);
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-label { font-size: 14px; color: var(--ink-muted); }
+  .summary-value { font-size: 14px; font-weight: 500; color: var(--ink); }
+  .summary-value.positive { color: var(--sage-deep); }
+  .summary-value.highlight {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--sage-deep);
+  }
+
+  /* ===================== */
+  /* DASHBOARD STYLES      */
+  /* ===================== */
+  #screen-dash { background: var(--linho); }
+
+  .dash-header {
+    background: var(--ink);
+    padding: 54px 28px 32px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .dash-header::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(143,175,143,0.15) 0%, transparent 70%);
+  }
+  .dash-greeting {
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 6px;
+  }
+  .dash-name {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 300;
+    color: var(--white);
+    margin-bottom: 24px;
+  }
+  .dash-name em { font-style: italic; color: var(--sage-light); }
+
+  /* BIG NUMBER */
+  .dash-balance-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 24px;
+    position: relative;
+    z-index: 1;
+  }
+  .dash-balance-label {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 8px;
+  }
+  .dash-balance-amount {
+    font-family: var(--font-display);
+    font-size: 44px;
+    font-weight: 300;
+    color: var(--white);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .dash-balance-amount span { font-size: 20px; opacity: 0.6; vertical-align: top; margin-top: 10px; display: inline-block; margin-right: 4px; }
+  .dash-balance-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.45);
+  }
+  .dash-status-pill {
+    position: absolute;
+    top: 20px; right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 100px;
+    background: rgba(143,175,143,0.2);
+    border: 1px solid rgba(143,175,143,0.3);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--sage-light);
+  }
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--sage-light);
+    animation: pulse 2s ease infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* DASH SCROLL */
+  .dash-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px 20px 100px;
+    scrollbar-width: none;
+  }
+  .dash-scroll::-webkit-scrollbar { display: none; }
+
+  /* MONTH BAR */
+  .month-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .month-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    letter-spacing: 0.04em;
+  }
+  .month-progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .month-prog {
+    width: 80px;
+    height: 4px;
+    background: var(--areia);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .month-prog-fill {
+    height: 100%;
+    width: 53%;
+    background: var(--sage);
+    border-radius: 4px;
+  }
+  .month-pct { font-size: 11px; color: var(--ink-muted); }
+
+  /* DASH CARDS */
+  .dash-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+  .dash-card-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  /* BREAKDOWN BARS */
+  .breakdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .breakdown-item:last-child { margin-bottom: 0; }
+  .breakdown-icon {
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .breakdown-label { font-size: 13px; color: var(--ink-soft); flex: 1; }
+  .breakdown-bar-wrap { flex: 1; }
+  .breakdown-bar {
+    height: 4px;
+    background: var(--linho);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .breakdown-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s cubic-bezier(0.4,0,0.2,1);
+  }
+  .breakdown-amount {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    flex-shrink: 0;
+    text-align: right;
+    width: 72px;
+  }
+
+  /* VORA CARD */
+  .vora-card {
+    background: var(--sage-pale);
+    border: 1.5px solid var(--sage-light);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .vora-card-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--sage-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .vora-card-text {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    flex: 1;
+  }
+  .vora-card-action {
+    display: block;
+    margin-top: 12px;
+    font-family: var(--font-body);
+    font-style: normal;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--sage-deep);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    text-align: left;
+  }
+
+  /* MINI CARDS ROW */
+  .mini-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .mini-card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 16px;
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+  .mini-card-label {
+    font-size: 11px;
+    color: var(--ink-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .mini-card-value {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--ink);
+  }
+  .mini-card-value.green { color: var(--sage-deep); }
+  .mini-card-value.orange { color: var(--terracota); }
+  .mini-card-sub { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
+
+  /* FAB */
+  .fab {
+    position: absolute;
+    bottom: 28px;
+    right: 24px;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--sage);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 26px;
+    box-shadow: 0 4px 20px rgba(143,175,143,0.45);
+    transition: background 0.15s, transform 0.1s;
+    z-index: 10;
+  }
+  .fab:hover { background: var(--sage-deep); }
+  .fab:active { transform: scale(0.94); }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 80px;
+    background: var(--white);
+    border-top: 1px solid var(--areia);
+    display: flex;
+    align-items: flex-start;
+    padding-top: 12px;
+    z-index: 9;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--areia-dark);
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .nav-item.active { color: var(--sage); }
+  .nav-item svg {
+    width: 22px; height: 22px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+  }
+
+  /* TOAST */
+  .toast {
+    position: absolute;
+    bottom: 100px;
+    left: 24px; right: 24px;
+    background: var(--ink);
+    color: white;
+    padding: 14px 18px;
+    border-radius: 14px;
+    font-size: 13px;
+    z-index: 200;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    text-align: center;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* CELEBRATION */
+  .celebration-emoji {
+    font-size: 64px;
+    text-align: center;
+    display: block;
+    margin: 20px 0;
+    animation: bounce 0.6s ease;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-16px); }
+    70% { transform: translateY(-8px); }
+  }
+
+  /* SIDEBAR INFO */
+  .info-note {
+    background: var(--linho);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+    margin-bottom: 20px;
+    border-left: 3px solid var(--sage);
+  }
+
+  /* SCREEN 0: WELCOME */
+  .welcome-hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 28px;
+    text-align: center;
+  }
+  .welcome-mascot-frame {
+    width: 160px; height: 200px;
+    border-radius: 100px 100px 80px 80px;
+    background: var(--sage-pale);
+    border: 1.5px solid var(--sage-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 32px;
+    font-size: 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .welcome-mascot-frame::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 40%;
+    background: linear-gradient(to top, var(--sage-light) 0%, transparent 100%);
+    opacity: 0.4;
+  }
+  .welcome-h1 {
+    font-family: var(--font-display);
+    font-size: 34px;
+    font-weight: 300;
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 14px;
+    letter-spacing: -0.01em;
+  }
+  .welcome-h1 em { font-style: italic; color: var(--sage); }
+  .welcome-p {
+    font-size: 15px;
+    color: var(--ink-muted);
+    line-height: 1.7;
+    max-width: 280px;
+    margin: 0 auto 36px;
+  }
+
+  /* TERRACOTA BG for warning state */
+  .bg-terracota-pale { background: var(--terracota-pale) !important; border-color: var(--terracota) !important; }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="screens">
+
+    <!-- ==================== -->
+    <!-- SCREEN 0: BOAS-VINDAS -->
+    <!-- ==================== -->
+    <div class="screen active" id="screen-welcome">
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg width="16" height="12" viewBox="0 0 16 12"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0" width="3" height="12" rx="1"/><rect x="13.5" y="0" width="2.5" height="12" rx="1" opacity="0.3"/></svg>
+          <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 3C5.5 3 3.3 4 1.8 5.7L0 4C2 1.8 4.9 0 8 0s6 1.8 8 4l-1.8 1.7C12.7 4 10.5 3 8 3z" opacity="0.4"/><path d="M8 6c-1.5 0-2.8.6-3.8 1.5L2.5 6C3.9 4.8 5.9 4 8 4s4.1.8 5.5 2l-1.7 1.5C10.8 6.6 9.5 6 8 6z" opacity="0.7"/><circle cx="8" cy="10" r="2"/></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="22" height="10" rx="3" stroke="#2A221C" stroke-width="1.2" fill="none"/><rect x="1.5" y="2.5" width="16" height="7" rx="2" fill="#2A221C"/><path d="M23 4v4a2 2 0 0 0 0-4z" fill="#2A221C" opacity="0.4"/></svg>
+        </div>
+      </div>
+      <div class="welcome-hero">
+        <div class="welcome-mascot-frame">🌿</div>
+        <div class="welcome-h1">Oi. Eu sou<br>a <em>Vora.</em></div>
+        <p class="welcome-p">Vou te mostrar como seu mês pode terminar — antes que ele aconteça. Sem planilha, sem susto.</p>
+        <button class="btn-primary" style="width: 100%;" onclick="goTo('screen-renda')">Vamos começar</button>
+        <button class="btn-secondary" onclick="goTo('screen-renda')">Já tenho uma conta</button>
+      </div>
+    </div>
+
+    <!-- ==================== -->
+    <!-- SCREEN 1: RENDA      -->
+    <!-- ==================== -->
+    <div class="screen hidden-right" id="screen-renda">
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg width="16" height="12" viewBox="0 0 16 12"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0" width="3" height="12" rx="1"/><rect x="13.5" y="0" width="2.5" height="12" rx="1" opacity="0.3"/></svg>
+          <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 3C5.5 3 3.3 4 1.8 5.7L0 4C2 1.8 4.9 0 8 0s6 1.8 8 4l-1.8 1.7C12.7 4 10.5 3 8 3z" opacity="0.4"/><path d="M8 6c-1.5 0-2.8.6-3.8 1.5L2.5 6C3.9 4.8 5.9 4 8 4s4.1.8 5.5 2l-1.7 1.5C10.8 6.6 9.5 6 8 6z" opacity="0.7"/><circle cx="8" cy="10" r="2"/></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="22" height="10" rx="3" stroke="#2A221C" stroke-width="1.2" fill="none"/><rect x="1.5" y="2.5" width="16" height="7" rx="2" fill="#2A221C"/><path d="M23 4v4a2 2 0 0 0 0-4z" fill="#2A221C" opacity="0.4"/></svg>
+        </div>
+      </div>
+      <div class="top-nav">
+        <button class="back-btn" onclick="goBack('screen-welcome')">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Voltar
+        </button>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" style="width: 25%"></div></div>
+        <div class="progress-label">1 de 4</div>
+      </div>
+      <div class="screen-content" style="padding-top: 28px;">
+        <div class="vora-mascot">
+          <div class="vora-avatar">🌿</div>
+          <div class="vora-bubble">Só preciso saber quanto entra por mês. Com isso já dá pra começar.</div>
+        </div>
+        <div class="section-label">Passo 1 — Renda</div>
+        <h2>Quanto você<br>ganha por mês?</h2>
+        <p class="screen-desc">Pode ser salário, freelance, pensão — o que entrar regularmente na sua conta.</p>
+
+        <div class="input-group">
+          <div class="input-label">Renda mensal</div>
+          <div class="input-wrap">
+            <span class="input-prefix">R$</span>
+            <input type="number" id="input-renda" placeholder="0,00" oninput="updateRenda(this.value)" style="font-size: 24px; padding: 18px 18px 18px 46px;">
+          </div>
+        </div>
+
+        <div class="section-label" style="margin-top: 8px;">Ou escolha um valor próximo</div>
+        <div class="quick-picks">
+          <span class="chip" onclick="setRenda(2000)">R$ 2.000</span>
+          <span class="chip" onclick="setRenda(3000)">R$ 3.000</span>
+          <span class="chip" onclick="setRenda(4000)">R$ 4.000</span>
+          <span class="chip" onclick="setRenda(5000)">R$ 5.000</span>
+          <span class="chip" onclick="setRenda(7000)">R$ 7.000</span>
+          <span class="chip" onclick="setRenda(10000)">R$ 10.000</span>
+        </div>
+
+        <div class="info-note">
+          Sua renda fica guardada só no seu celular. A Vora não compartilha nada com ninguém.
+        </div>
+      </div>
+      <div class="cta-wrap">
+        <button class="btn-primary" id="btn-renda" onclick="goTo('screen-fixos')" disabled>Continuar</button>
+      </div>
+    </div>
+
+    <!-- ==================== -->
+    <!-- SCREEN 2: FIXOS      -->
+    <!-- ==================== -->
+    <div class="screen hidden-right" id="screen-fixos">
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg width="16" height="12" viewBox="0 0 16 12"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0" width="3" height="12" rx="1"/><rect x="13.5" y="0" width="2.5" height="12" rx="1" opacity="0.3"/></svg>
+          <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 3C5.5 3 3.3 4 1.8 5.7L0 4C2 1.8 4.9 0 8 0s6 1.8 8 4l-1.8 1.7C12.7 4 10.5 3 8 3z" opacity="0.4"/><path d="M8 6c-1.5 0-2.8.6-3.8 1.5L2.5 6C3.9 4.8 5.9 4 8 4s4.1.8 5.5 2l-1.7 1.5C10.8 6.6 9.5 6 8 6z" opacity="0.7"/><circle cx="8" cy="10" r="2"/></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="22" height="10" rx="3" stroke="#2A221C" stroke-width="1.2" fill="none"/><rect x="1.5" y="2.5" width="16" height="7" rx="2" fill="#2A221C"/><path d="M23 4v4a2 2 0 0 0 0-4z" fill="#2A221C" opacity="0.4"/></svg>
+        </div>
+      </div>
+      <div class="top-nav">
+        <button class="back-btn" onclick="goBack('screen-renda')">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Voltar
+        </button>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" style="width: 50%"></div></div>
+        <div class="progress-label">2 de 4</div>
+      </div>
+      <div class="screen-content" style="padding-top: 28px;">
+        <div class="vora-mascot">
+          <div class="vora-avatar">🌿</div>
+          <div class="vora-bubble">Esses são os gastos que chegam todo mês, certinhos. Não precisa lembrar de todos agora.</div>
+        </div>
+        <div class="section-label">Passo 2 — Gastos fixos</div>
+        <h2>O que você paga<br>todo mês?</h2>
+        <p class="screen-desc">Aluguel, conta de luz, internet, streaming — tudo que vem todo mês na mesma data.</p>
+
+        <div class="section-label">Sugestões comuns</div>
+        <div class="category-grid" id="fixos-suggestions">
+          <div class="cat-card" id="cat-aluguel" onclick="addSuggestion('fixos','🏠','Aluguel / Moradia', 1200, 'cat-aluguel')">
+            <span class="cat-emoji">🏠</span>
+            <div class="cat-info"><div class="cat-name">Aluguel / Moradia</div><div class="cat-hint">Toque para adicionar</div></div>
+          </div>
+          <div class="cat-card" id="cat-energia" onclick="addSuggestion('fixos','⚡','Energia elétrica', 120, 'cat-energia')">
+            <span class="cat-emoji">⚡</span>
+            <div class="cat-info"><div class="cat-name">Energia elétrica</div><div class="cat-hint">Toque para adicionar</div></div>
+          </div>
+          <div class="cat-card" id="cat-agua" onclick="addSuggestion('fixos','💧','Água', 60, 'cat-agua')">
+            <span class="cat-emoji">💧</span>
+            <div class="cat-info"><div class="cat-name">Água</div><div class="cat-hint">Toque para adicionar</div></div>
+          </div>
+          <div class="cat-card" id="cat-internet" onclick="addSuggestion('fixos','📶','Internet', 100, 'cat-internet')">
+            <span class="cat-emoji">📶</span>
+            <div class="cat-info"><div class="cat-name">Internet</div><div class="cat-hint">Toque para adicionar</div></div>
+          </div>
+          <div class="cat-card" id="cat-celular" onclick="addSuggestion('fixos','📱','Celular', 70, 'cat-celular')">
+            <span class="cat-emoji">📱</span>
+            <div class="cat-info"><div class="cat-name">Celular</div><div class="cat-hint">Toque para adicionar</div></div>
+          </div>
+          <div class="cat-card" id="cat-streaming" onclick="addSuggestion('fixos','🎬','Streamings', 80, 'cat-streaming')">
+            <span class="cat-emoji">🎬</span>
+            <div class="cat-info"><div class="cat-name">Streamings</div><div class="cat-hint">Toque para adicionar</div></div>
+          </div>
+        </div>
+
+        <div class="section-label">Adicionados</div>
+        <div class="expense-list" id="fixos-list"></div>
+
+        <div class="section-label">Adicionar outro</div>
+        <div class="add-expense-row">
+          <div style="position: relative; flex: 1;">
+            <input type="text" class="no-prefix" id="fixo-nome" placeholder="Ex: Academia" style="padding: 13px 14px; font-size: 14px;">
+          </div>
+          <div style="position: relative;">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--ink-muted);pointer-events:none;">R$</span>
+            <input type="number" class="amount-input" id="fixo-valor" placeholder="0" style="width: 90px;">
+          </div>
+          <button class="add-btn" onclick="addExpense('fixos')">+</button>
+        </div>
+      </div>
+      <div class="cta-wrap">
+        <button class="btn-primary" onclick="goTo('screen-variaveis')">Continuar</button>
+        <button class="btn-secondary" onclick="goTo('screen-variaveis')">Pular por agora</button>
+      </div>
+    </div>
+
+    <!-- ====================== -->
+    <!-- SCREEN 3: VARIÁVEIS    -->
+    <!-- ====================== -->
+    <div class="screen hidden-right" id="screen-variaveis">
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg width="16" height="12" viewBox="0 0 16 12"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0" width="3" height="12" rx="1"/><rect x="13.5" y="0" width="2.5" height="12" rx="1" opacity="0.3"/></svg>
+          <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 3C5.5 3 3.3 4 1.8 5.7L0 4C2 1.8 4.9 0 8 0s6 1.8 8 4l-1.8 1.7C12.7 4 10.5 3 8 3z" opacity="0.4"/><path d="M8 6c-1.5 0-2.8.6-3.8 1.5L2.5 6C3.9 4.8 5.9 4 8 4s4.1.8 5.5 2l-1.7 1.5C10.8 6.6 9.5 6 8 6z" opacity="0.7"/><circle cx="8" cy="10" r="2"/></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="22" height="10" rx="3" stroke="#2A221C" stroke-width="1.2" fill="none"/><rect x="1.5" y="2.5" width="16" height="7" rx="2" fill="#2A221C"/><path d="M23 4v4a2 2 0 0 0 0-4z" fill="#2A221C" opacity="0.4"/></svg>
+        </div>
+      </div>
+      <div class="top-nav">
+        <button class="back-btn" onclick="goBack('screen-fixos')">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Voltar
+        </button>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" style="width: 75%"></div></div>
+        <div class="progress-label">3 de 4</div>
+      </div>
+      <div class="screen-content" style="padding-top: 28px;">
+        <div class="vora-mascot">
+          <div class="vora-avatar">🌿</div>
+          <div class="vora-bubble">Esses variam um pouco a cada mês — mas é bom ter uma noção pra a projeção ficar mais próxima da realidade.</div>
+        </div>
+        <div class="section-label">Passo 3 — Gastos variáveis</div>
+        <h2>E o que muda<br>todo mês?</h2>
+        <p class="screen-desc">Mercado, farmácia, transporte, saúde — gastos que existem mas não têm valor fixo.</p>
+
+        <div class="section-label">Sugestões comuns</div>
+        <div class="category-grid" id="variaveis-suggestions">
+          <div class="cat-card" id="cat-mercado" onclick="addSuggestion('variaveis','🛒','Mercado', 500, 'cat-mercado')">
+            <span class="cat-emoji">🛒</span>
+            <div class="cat-info"><div class="cat-name">Mercado</div><div class="cat-hint">Toque para adicionar</div></div>
+          </div>
+          <div class="cat-card" id="cat-transporte" onclick="addSuggestion('variaveis','🚌','Transporte', 200, 'cat-transporte')">
+            <span class="cat-emoji">🚌</span>
+            <div class="cat-info"><div class="cat-name">Transporte</div><div class="cat-hint">Toque para adicionar</div></div>
+          </div>
+          <div class="cat-card" id="cat-saude" onclick="addSuggestion('variaveis','💊','Farmácia / Saúde', 80, 'cat-saude')">
+            <span class="cat-emoji">💊</span>
+            <div class="cat-info"><div class="cat-name">Farmácia / Saúde</div><div class="cat-hint">Toque para adicionar</div></div>
+          </div>
+          <div class="cat-card" id="cat-higiene" onclick="addSuggestion('variaveis','🧴','Higiene / Beleza', 100, 'cat-higiene')">
+            <span class="cat-emoji">🧴</span>
+            <div class="cat-info"><div class="cat-name">Higiene / Beleza</div><div class="cat-hint">Toque para adicionar</div></div>
+          </div>
+          <div class="cat-card" id="cat-roupa" onclick="addSuggestion('variaveis','👕','Roupas', 150, 'cat-roupa')">
+            <span class="cat-emoji">👕</span>
+            <div class="cat-info"><div class="cat-name">Roupas</div><div class="cat-hint">Toque para adicionar</div></div>
+          </div>
+          <div class="cat-card" id="cat-pet" onclick="addSuggestion('variaveis','🐾','Pet', 120, 'cat-pet')">
+            <span class="cat-emoji">🐾</span>
+            <div class="cat-info"><div class="cat-name">Pet</div><div class="cat-hint">Toque para adicionar</div></div>
+          </div>
+        </div>
+
+        <div class="section-label">Adicionados</div>
+        <div class="expense-list" id="variaveis-list"></div>
+
+        <div class="section-label">Adicionar outro</div>
+        <div class="add-expense-row">
+          <div style="position: relative; flex: 1;">
+            <input type="text" class="no-prefix" id="variavel-nome" placeholder="Ex: Farmácia" style="padding: 13px 14px; font-size: 14px;">
+          </div>
+          <div style="position: relative;">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--ink-muted);pointer-events:none;">R$</span>
+            <input type="number" class="amount-input" id="variavel-valor" placeholder="0" style="width: 90px;">
+          </div>
+          <button class="add-btn" onclick="addExpense('variaveis')">+</button>
+        </div>
+      </div>
+      <div class="cta-wrap">
+        <button class="btn-primary" onclick="goTo('screen-lazer')">Continuar</button>
+        <button class="btn-secondary" onclick="goTo('screen-lazer')">Pular por agora</button>
+      </div>
+    </div>
+
+    <!-- ====================== -->
+    <!-- SCREEN 4: LAZER/DIA    -->
+    <!-- ====================== -->
+    <div class="screen hidden-right" id="screen-lazer">
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg width="16" height="12" viewBox="0 0 16 12"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0" width="3" height="12" rx="1"/><rect x="13.5" y="0" width="2.5" height="12" rx="1" opacity="0.3"/></svg>
+          <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 3C5.5 3 3.3 4 1.8 5.7L0 4C2 1.8 4.9 0 8 0s6 1.8 8 4l-1.8 1.7C12.7 4 10.5 3 8 3z" opacity="0.4"/><path d="M8 6c-1.5 0-2.8.6-3.8 1.5L2.5 6C3.9 4.8 5.9 4 8 4s4.1.8 5.5 2l-1.7 1.5C10.8 6.6 9.5 6 8 6z" opacity="0.7"/><circle cx="8" cy="10" r="2"/></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="22" height="10" rx="3" stroke="#2A221C" stroke-width="1.2" fill="none"/><rect x="1.5" y="2.5" width="16" height="7" rx="2" fill="#2A221C"/><path d="M23 4v4a2 2 0 0 0 0-4z" fill="#2A221C" opacity="0.4"/></svg>
+        </div>
+      </div>
+      <div class="top-nav">
+        <button class="back-btn" onclick="goBack('screen-variaveis')">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Voltar
+        </button>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" style="width: 90%"></div></div>
+        <div class="progress-label">4 de 4</div>
+      </div>
+      <div class="screen-content" style="padding-top: 28px;">
+        <div class="vora-mascot">
+          <div class="vora-avatar">🌿</div>
+          <div class="vora-bubble">Essa parte é importante. Quanto você gasta pra viver bem no dia a dia — bar, restaurante, rolê?</div>
+        </div>
+        <div class="section-label">Passo 4 — Dia a dia</div>
+        <h2>O que você curte<br>gastar por mês?</h2>
+        <p class="screen-desc">Não é pra cortar — é pra incluir na conta. Bar, restaurante, cinema, delivery, passeio.</p>
+
+        <div class="slider-wrap">
+          <div class="slider-display">
+            <div class="slider-value"><span>R$</span> <span id="lazer-display">300</span></div>
+            <div class="slider-desc">por mês em lazer e dia a dia</div>
+          </div>
+          <input type="range" id="lazer-slider" min="0" max="2000" step="50" value="300" oninput="updateLazer(this.value)">
+          <div class="slider-labels"><span>R$ 0</span><span>R$ 2.000</span></div>
+        </div>
+
+        <div class="section-label">Ou escolha um perfil</div>
+        <div class="lifestyle-grid">
+          <div class="lifestyle-card" id="lc-leve" onclick="selectLifestyle(200, 'lc-leve')">
+            <div class="lifestyle-icon">🏠</div>
+            <div class="lifestyle-content">
+              <div class="lifestyle-title">Tranquilo</div>
+              <div class="lifestyle-desc">Evito sair muito, prefiro ficar em casa</div>
+            </div>
+            <div class="lifestyle-amount">~R$ 200</div>
+            <div class="lifestyle-check">✓</div>
+          </div>
+          <div class="lifestyle-card selected" id="lc-medio" onclick="selectLifestyle(500, 'lc-medio')">
+            <div class="lifestyle-icon">🍕</div>
+            <div class="lifestyle-content">
+              <div class="lifestyle-title">Moderado</div>
+              <div class="lifestyle-desc">Saio algumas vezes, mas não todo dia</div>
+            </div>
+            <div class="lifestyle-amount">~R$ 500</div>
+            <div class="lifestyle-check">✓</div>
+          </div>
+          <div class="lifestyle-card" id="lc-ativo" onclick="selectLifestyle(900, 'lc-ativo')">
+            <div class="lifestyle-icon">🎉</div>
+            <div class="lifestyle-content">
+              <div class="lifestyle-title">Ativo</div>
+              <div class="lifestyle-desc">Gosto de sair bastante, barzinho, etc</div>
+            </div>
+            <div class="lifestyle-amount">~R$ 900</div>
+            <div class="lifestyle-check">✓</div>
+          </div>
+        </div>
+      </div>
+      <div class="cta-wrap">
+        <button class="btn-primary" onclick="goTo('screen-resumo')">Ver meu resumo</button>
+      </div>
+    </div>
+
+    <!-- ====================== -->
+    <!-- SCREEN 5: RESUMO       -->
+    <!-- ====================== -->
+    <div class="screen hidden-right" id="screen-resumo">
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg width="16" height="12" viewBox="0 0 16 12"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0" width="3" height="12" rx="1"/><rect x="13.5" y="0" width="2.5" height="12" rx="1" opacity="0.3"/></svg>
+          <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 3C5.5 3 3.3 4 1.8 5.7L0 4C2 1.8 4.9 0 8 0s6 1.8 8 4l-1.8 1.7C12.7 4 10.5 3 8 3z" opacity="0.4"/><path d="M8 6c-1.5 0-2.8.6-3.8 1.5L2.5 6C3.9 4.8 5.9 4 8 4s4.1.8 5.5 2l-1.7 1.5C10.8 6.6 9.5 6 8 6z" opacity="0.7"/><circle cx="8" cy="10" r="2"/></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="22" height="10" rx="3" stroke="#2A221C" stroke-width="1.2" fill="none"/><rect x="1.5" y="2.5" width="16" height="7" rx="2" fill="#2A221C"/><path d="M23 4v4a2 2 0 0 0 0-4z" fill="#2A221C" opacity="0.4"/></svg>
+        </div>
+      </div>
+      <div class="top-nav">
+        <button class="back-btn" onclick="goBack('screen-lazer')">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Voltar
+        </button>
+      </div>
+      <div class="screen-content" style="padding-top: 24px;">
+
+        <span class="celebration-emoji" id="resumo-emoji">🌿</span>
+
+        <div class="section-label" style="text-align: center;">Seu mês em um olhar</div>
+        <h2 style="text-align: center; font-size: 26px; margin-bottom: 24px;" id="resumo-headline">Ficou assim<br>o seu mês.</h2>
+
+        <div class="summary-card">
+          <div class="summary-row">
+            <span class="summary-label">💰 Renda mensal</span>
+            <span class="summary-value" id="resumo-renda">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">🏠 Gastos fixos</span>
+            <span class="summary-value" id="resumo-fixos">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">🛒 Gastos variáveis</span>
+            <span class="summary-value" id="resumo-variaveis">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">🎉 Dia a dia</span>
+            <span class="summary-value" id="resumo-lazer">—</span>
+          </div>
+          <div class="summary-row" style="padding-top: 12px; margin-top: 4px; border-top: 1.5px solid var(--areia); border-bottom: none;">
+            <span style="font-size: 15px; font-weight: 500; color: var(--ink);">Sobra estimada</span>
+            <span class="summary-value highlight" id="resumo-sobra">—</span>
+          </div>
+        </div>
+
+        <div class="vora-mascot" style="margin-top: 8px;">
+          <div class="vora-avatar">🌿</div>
+          <div class="vora-bubble" id="resumo-vora-msg">Veja como o seu mês ficou. A gente pode ajustar qualquer coisa quando quiser.</div>
+        </div>
+      </div>
+      <div class="cta-wrap">
+        <button class="btn-primary" onclick="goTo('screen-dash')">Ver meu painel</button>
+      </div>
+    </div>
+
+    <!-- ====================== -->
+    <!-- SCREEN 6: DASHBOARD    -->
+    <!-- ====================== -->
+    <div class="screen hidden-right" id="screen-dash">
+      <div class="dash-header">
+        <div class="dash-greeting">Bom dia,</div>
+        <div class="dash-name">Como vai o seu<br><em>mês de maio?</em></div>
+        <div class="dash-balance-card">
+          <div class="dash-status-pill">
+            <div class="status-dot"></div>
+            <span id="dash-status-text">Maio tranquilo</span>
+          </div>
+          <div class="dash-balance-label">Sobra estimada</div>
+          <div class="dash-balance-amount"><span>R$</span><span id="dash-sobra-val">—</span></div>
+          <div class="dash-balance-sub">com base no que você informou</div>
+        </div>
+      </div>
+
+      <div class="dash-scroll">
+        <div style="height: 20px;"></div>
+
+        <!-- MONTH PROGRESS -->
+        <div class="month-bar">
+          <span class="month-title">Maio 2025</span>
+          <div class="month-progress-wrap">
+            <div class="month-prog"><div class="month-prog-fill"></div></div>
+            <span class="month-pct">53% do mês</span>
+          </div>
+        </div>
+
+        <!-- MINI CARDS -->
+        <div class="mini-row">
+          <div class="mini-card">
+            <div class="mini-card-label">Renda</div>
+            <div class="mini-card-value" id="dash-renda-mini">—</div>
+            <div class="mini-card-sub">por mês</div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-card-label">Total comprometido</div>
+            <div class="mini-card-value orange" id="dash-gasto-mini">—</div>
+            <div class="mini-card-sub">fixos + variáveis</div>
+          </div>
+        </div>
+
+        <!-- BREAKDOWN -->
+        <div class="dash-card">
+          <div class="dash-card-label">Para onde vai o dinheiro</div>
+          <div id="breakdown-list"></div>
+        </div>
+
+        <!-- VORA MESSAGE -->
+        <div class="vora-card">
+          <div class="vora-card-avatar">🌿</div>
+          <div>
+            <div class="vora-card-text" id="dash-vora-msg">"Seu mês está bem encaminhado. Quer simular uma compra antes de decidir?"</div>
+            <button class="vora-card-action">Simular uma compra →</button>
+          </div>
+        </div>
+
+        <!-- CTA BOTTOM -->
+        <div style="height: 100px;"></div>
+      </div>
+
+      <!-- FAB -->
+      <button class="fab" onclick="showToast('Em breve: registrar gasto 📝')">+</button>
+
+      <!-- BOTTOM NAV -->
+      <div class="bottom-nav">
+        <div class="nav-item active">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Início
+        </div>
+        <div class="nav-item" onclick="showToast('Seção em desenvolvimento 🛠️')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Gastos
+        </div>
+        <div class="nav-item" onclick="showToast('Seção em desenvolvimento 🛠️')">
+          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Projeção
+        </div>
+        <div class="nav-item" onclick="showToast('Seção em desenvolvimento 🛠️')">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
+          Perfil
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /screens -->
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+</div><!-- /phone -->
+
+<script>
+  // STATE
+  const state = {
+    renda: 0,
+    fixos: [],
+    variaveis: [],
+    lazer: 500,
+  };
+
+  // NAVIGATION
+  let currentScreen = 'screen-welcome';
+  let history = [];
+
+  function goTo(screenId) {
+    const current = document.getElementById(currentScreen);
+    const next = document.getElementById(screenId);
+
+    current.classList.remove('active');
+    current.classList.add('hidden-left');
+
+    next.classList.remove('hidden-right', 'hidden-left');
+    next.classList.add('active');
+
+    history.push(currentScreen);
+    currentScreen = screenId;
+
+    // Trigger screen-specific logic
+    if (screenId === 'screen-resumo') buildResumo();
+    if (screenId === 'screen-dash') buildDash();
+  }
+
+  function goBack(screenId) {
+    const current = document.getElementById(currentScreen);
+    const prev = document.getElementById(screenId);
+
+    current.classList.remove('active');
+    current.classList.add('hidden-right');
+
+    prev.classList.remove('hidden-right', 'hidden-left');
+    prev.classList.add('active');
+
+    currentScreen = screenId;
+  }
+
+  // FORMAT CURRENCY
+  function fmt(val) {
+    return 'R$ ' + Number(val).toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+  }
+
+  // RENDA
+  function updateRenda(val) {
+    state.renda = parseFloat(val) || 0;
+    document.getElementById('btn-renda').disabled = state.renda <= 0;
+  }
+
+  function setRenda(val) {
+    state.renda = val;
+    document.getElementById('input-renda').value = val;
+    document.getElementById('btn-renda').disabled = false;
+    document.querySelectorAll('#screen-renda .chip').forEach(c => c.classList.remove('selected'));
+    event.target.closest('.chip').classList.add('selected');
+  }
+
+  // LAZER SLIDER
+  function updateLazer(val) {
+    state.lazer = parseInt(val);
+    document.getElementById('lazer-display').textContent = Number(val).toLocaleString('pt-BR');
+    // deselect lifestyle cards
+    document.querySelectorAll('.lifestyle-card').forEach(c => c.classList.remove('selected'));
+  }
+
+  function selectLifestyle(val, id) {
+    state.lazer = val;
+    document.getElementById('lazer-slider').value = val;
+    document.getElementById('lazer-display').textContent = val.toLocaleString('pt-BR');
+    document.querySelectorAll('.lifestyle-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById(id).classList.add('selected');
+  }
+
+  // EXPENSES
+  function addSuggestion(type, icon, name, amount, cardId) {
+    const item = { icon, name, amount };
+    if (type === 'fixos') state.fixos.push(item);
+    else state.variaveis.push(item);
+    renderList(type);
+    document.getElementById(cardId).classList.add('added');
+  }
+
+  function addExpense(type) {
+    const nameEl = document.getElementById(type === 'fixos' ? 'fixo-nome' : 'variavel-nome');
+    const valEl = document.getElementById(type === 'fixos' ? 'fixo-valor' : 'variavel-valor');
+    const name = nameEl.value.trim();
+    const amount = parseFloat(valEl.value) || 0;
+    if (!name || amount <= 0) { showToast('Preenche nome e valor 😉'); return; }
+    const icons = ['📌','💡','🔔','📦','🗂️','💳'];
+    const icon = icons[Math.floor(Math.random() * icons.length)];
+    const item = { icon, name, amount };
+    if (type === 'fixos') state.fixos.push(item);
+    else state.variaveis.push(item);
+    renderList(type);
+    nameEl.value = '';
+    valEl.value = '';
+  }
+
+  function removeExpense(type, index) {
+    if (type === 'fixos') state.fixos.splice(index, 1);
+    else state.variaveis.splice(index, 1);
+    renderList(type);
+  }
+
+  function renderList(type) {
+    const list = state[type];
+    const el = document.getElementById(type + '-list');
+    if (list.length === 0) { el.innerHTML = '<p style="font-size:13px;color:var(--ink-muted);padding:8px 0;">Nenhum adicionado ainda.</p>'; return; }
+    el.innerHTML = list.map((item, i) => `
+      <div class="expense-item">
+        <div class="expense-icon">${item.icon}</div>
+        <div class="expense-info">
+          <div class="expense-name">${item.name}</div>
+          <div class="expense-amount">${fmt(item.amount)} / mês</div>
+        </div>
+        <button class="expense-remove" onclick="removeExpense('${type}', ${i})">×</button>
+      </div>
+    `).join('');
+  }
+
+  // TOTALS
+  function totalFixos() { return state.fixos.reduce((s, i) => s + i.amount, 0); }
+  function totalVariaveis() { return state.variaveis.reduce((s, i) => s + i.amount, 0); }
+  function totalGastos() { return totalFixos() + totalVariaveis() + state.lazer; }
+  function sobra() { return state.renda - totalGastos(); }
+
+  // RESUMO SCREEN
+  function buildResumo() {
+    const s = sobra();
+    document.getElementById('resumo-renda').textContent = fmt(state.renda || 0);
+    document.getElementById('resumo-fixos').textContent = fmt(totalFixos());
+    document.getElementById('resumo-variaveis').textContent = fmt(totalVariaveis());
+    document.getElementById('resumo-lazer').textContent = fmt(state.lazer);
+    document.getElementById('resumo-sobra').textContent = fmt(s);
+
+    if (s >= 500) {
+      document.getElementById('resumo-emoji').textContent = '🌱';
+      document.getElementById('resumo-headline').innerHTML = 'Olha que<br><em>sobra</em> boa.';
+      document.getElementById('resumo-vora-msg').textContent = 'Seu mês está bem equilibrado. Você tem uma margem real pra respirar — e talvez até guardar algo.';
+    } else if (s >= 0) {
+      document.getElementById('resumo-emoji').textContent = '🌿';
+      document.getElementById('resumo-headline').innerHTML = 'Ficou assim<br>o seu mês.';
+      document.getElementById('resumo-vora-msg').textContent = 'Não sobra muito, mas o mês fecha. A gente pode ajustar qualquer coisa quando quiser.';
+    } else {
+      document.getElementById('resumo-emoji').textContent = '🤔';
+      document.getElementById('resumo-headline').innerHTML = 'Olha isso<br>aqui comigo.';
+      document.getElementById('resumo-vora-msg').textContent = 'Os gastos ficaram maiores que a renda. Não é problema — é informação. A gente pode ajustar agora.';
+    }
+  }
+
+  // DASHBOARD
+  function buildDash() {
+    const s = sobra();
+    const renda = state.renda || 4200;
+    const totalG = totalGastos();
+    const sobraVal = renda - totalG;
+
+    document.getElementById('dash-sobra-val').textContent = Number(Math.max(0, sobraVal)).toLocaleString('pt-BR');
+    document.getElementById('dash-renda-mini').textContent = fmt(renda);
+    document.getElementById('dash-gasto-mini').textContent = fmt(totalFixos() + totalVariaveis());
+
+    // Status
+    if (sobraVal > 500) {
+      document.getElementById('dash-status-text').textContent = 'Maio tranquilo';
+    } else if (sobraVal > 0) {
+      document.getElementById('dash-status-text').textContent = 'Maio equilibrado';
+    } else {
+      document.getElementById('dash-status-text').textContent = 'Atenção no mês';
+    }
+
+    // Breakdown
+    const cats = [];
+    if (totalFixos() > 0) cats.push({ icon: '🏠', label: 'Fixos', amount: totalFixos(), color: '#8FAF8F' });
+    if (totalVariaveis() > 0) cats.push({ icon: '🛒', label: 'Variáveis', amount: totalVariaveis(), color: '#B89B6A' });
+    if (state.lazer > 0) cats.push({ icon: '🎉', label: 'Dia a dia', amount: state.lazer, color: '#C47B5A' });
+    if (sobraVal > 0) cats.push({ icon: '💚', label: 'Sobra', amount: sobraVal, color: '#4A7050' });
+
+    const total = renda || 1;
+    const el = document.getElementById('breakdown-list');
+    el.innerHTML = cats.length ? cats.map(c => `
+      <div class="breakdown-item">
+        <div class="breakdown-icon" style="background: ${c.color}22;">${c.icon}</div>
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span class="breakdown-label">${c.label}</span>
+            <span class="breakdown-amount">${fmt(c.amount)}</span>
+          </div>
+          <div class="breakdown-bar">
+            <div class="breakdown-bar-fill" style="width:${Math.min(100,(c.amount/total)*100)}%;background:${c.color};"></div>
+          </div>
+        </div>
+      </div>
+    `).join('') : '<p style="font-size:13px;color:var(--ink-muted);">Adicione gastos para ver o breakdown.</p>';
+
+    // Vora message
+    if (sobraVal > 500) {
+      document.getElementById('dash-vora-msg').textContent = `"Você tem ${fmt(sobraVal)} de margem esse mês. Quer simular uma compra antes de decidir?"`;
+    } else if (sobraVal > 0) {
+      document.getElementById('dash-vora-msg').textContent = `"O mês tá equilibrado, mas a margem é pequena. Qualquer gasto extra vale verificar antes."`;
+    } else {
+      document.getElementById('dash-vora-msg').textContent = `"Os gastos estão um pouco maiores que a renda. Posso te mostrar onde dá pra ajustar?"`;
+    }
+  }
+
+  // TOAST
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // Init lists
+  renderList('fixos');
+  renderList('variaveis');
+</script>
+</body>
+</html>
