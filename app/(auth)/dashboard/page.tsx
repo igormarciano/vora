@@ -81,22 +81,38 @@ export default async function DashboardPage() {
         <CardStatus status={status} />
       </div>
 
-      {/* Empty state CTA */}
+      {/* Setup invitation card — aparece enquanto o usuário não preencheu nenhuma receita */}
       {totalReceitas === 0 && (
-        <div className="mt-8 bg-[#dce6dc] rounded-2xl p-6 flex flex-col gap-3">
-          <h2 className="font-fraunces text-[20px] text-[#3c4a3c]">
-            Por onde começar?
-          </h2>
-          <p className="text-[15px] text-[#4f604f] leading-relaxed">
-            Adicione sua receita primeiro — ela é a base de tudo. Depois registre seus gastos fixos e a Vora monta sua projeção.
+        <div className="mt-8 bg-[#dce6dc] rounded-2xl p-6 flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-[#b4c9b4] flex items-center justify-center text-[22px] shrink-0">
+              🌿
+            </div>
+            <div>
+              <h2 className="font-fraunces text-[20px] text-[#3c4a3c] leading-tight">
+                Monte seu mês em 2 minutos
+              </h2>
+              <p className="text-[13px] text-[#4f604f]">
+                Configuração guiada passo a passo
+              </p>
+            </div>
+          </div>
+          <p className="text-[14px] text-[#4f604f] leading-relaxed">
+            Me conta sua renda e principais gastos — eu monto a projeção do seu mês e você enxerga quanto vai sobrar.
           </p>
-          <div className="flex gap-3 mt-2">
+          <div className="flex flex-col gap-2">
             <a
-              href="/controle"
-              className="font-fraunces text-[15px] px-5 py-2.5 text-center transition-opacity hover:opacity-90"
+              href="/setup"
+              className="font-fraunces text-[15px] px-5 py-3 text-center rounded-xl transition-opacity hover:opacity-90"
               style={{ backgroundColor: '#8faf8f', color: '#f9f7f4' }}
             >
-              Ir para Controle
+              Começar configuração →
+            </a>
+            <a
+              href="/controle"
+              className="text-[13px] text-[#6b7280] text-center py-1 hover:text-[#3c4a3c] transition-colors"
+            >
+              Ou adicionar manualmente no Controle
             </a>
           </div>
         </div>

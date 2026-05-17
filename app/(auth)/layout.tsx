@@ -10,8 +10,17 @@ export default async function AuthLayout({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect('/login')
+  if (!user) redirect('/login')
+
+  // Redireciona para o setup na primeira vez (enquanto setup_completo = false)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('setup_completo')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.setup_completo) {
+    redirect('/setup')
   }
 
   return <LayoutShell>{children}</LayoutShell>

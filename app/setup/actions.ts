@@ -4,6 +4,21 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getMesReferencia } from '@/lib/engine'
 
+export async function marcarSetupCompleto() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ setup_completo: true })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard')
+  return {}
+}
+
 interface SetupItem {
   icon: string
   nome: string
@@ -79,6 +94,9 @@ export async function salvarSetupInicial(data: {
     })
     if (error) return { error: error.message }
   }
+
+  // Marcar setup como completo
+  await supabase.from('profiles').update({ setup_completo: true }).eq('id', user.id)
 
   revalidatePath('/dashboard')
   revalidatePath('/controle')

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Plus, X, ChevronLeft } from 'lucide-react'
 import Image from 'next/image'
-import { salvarSetupInicial } from '@/app/setup/actions'
+import { salvarSetupInicial, marcarSetupCompleto } from '@/app/setup/actions'
 import { formatCurrency } from '@/lib/engine'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -130,6 +130,14 @@ export function SetupWizard() {
     setLazer(val); setLifestyle(id)
   }
 
+  async function handlePular() {
+    setLoading(true)
+    await marcarSetupCompleto()
+    setLoading(false)
+    router.refresh()
+    router.push('/dashboard')
+  }
+
   async function handleFinish() {
     setLoading(true)
     const result = await salvarSetupInicial({ renda: rendaNum, fixos, variaveis, lazer })
@@ -155,7 +163,7 @@ export function SetupWizard() {
             </button>
           )}
           {step === 'renda' && (
-            <button onClick={() => router.push('/dashboard')} className="ml-auto text-[13px] text-[#a5bfa5] hover:text-[#6b7280] transition-colors">
+            <button onClick={handlePular} disabled={loading} className="ml-auto text-[13px] text-[#a5bfa5] hover:text-[#6b7280] transition-colors disabled:opacity-50">
               Pular tudo
             </button>
           )}
