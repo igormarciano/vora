@@ -1,8 +1,29 @@
-export default function ControlePage() {
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { getMesReferencia } from '@/lib/engine'
+import { ControleClient } from '@/components/controle/ControleClient'
+
+export default async function ControlePage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const mes = getMesReferencia()
+
+  const [{ data: receitas }, { data: gastosFixos }, { data: gastosVariaveis }, { data: cartoes }] =
+    await Promise.all([
+      supabase.from('receitas').select('*').eq('user_id', user.id).eq('mes_referencia', mes).order('created_at', { ascending: false }),
+      supabase.from('gastos_fixos').select('*').eq('user_id', user.id).eq('mes_referencia', mes).order('created_at', { ascending: false }),
+      supabase.from('gastos_variaveis').select('*').eq('user_id', user.id).eq('mes_referencia', mes).order('created_at', { ascending: false }),
+      supabase.from('cartoes').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+    ])
+
   return (
-    <div className="p-8">
-      <h1 className="font-fraunces text-[32px] text-[#3c4a3c]">Controle</h1>
-      <p className="text-[#6b7280] mt-2">Em breve: receitas, gastos fixos e variáveis.</p>
-    </div>
+    <ControleClient
+      receitas={receitas ?? []}
+      gastosFixos={gastosFixos ?? []}
+      gastosVariaveis={gastosVariaveis ?? []}
+      cartoes={cartoes ?? []}
+    />
   )
 }
