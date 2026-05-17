@@ -22,7 +22,7 @@ export default function CadastroPage() {
       password,
       options: {
         data: { nome },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/onboarding`,
       },
     })
     setLoading(false)

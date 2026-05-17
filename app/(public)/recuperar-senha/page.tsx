@@ -17,7 +17,7 @@ export default function RecuperarSenhaPage() {
     setLoading(true)
     const supabase = createClient()
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?type=recovery`,
     })
     setLoading(false)
     if (error) {
