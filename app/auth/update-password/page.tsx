@@ -31,8 +31,8 @@ export default function UpdatePasswordPage() {
       return
     }
     toast.success('Senha atualizada com sucesso!')
-    router.push('/dashboard')
     router.refresh()
+    router.push('/dashboard')
   }
 
   return (
