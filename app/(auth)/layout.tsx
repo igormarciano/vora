@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Sidebar } from '@/components/layout/Sidebar'
+import { LayoutShell } from '@/components/layout/LayoutShell'
 
 export default async function AuthLayout({
   children,
@@ -14,12 +14,5 @@ export default async function AuthLayout({
     redirect('/login')
   }
 
-  return (
-    <div className="flex min-h-screen bg-[#f8fafb]">
-      <Sidebar />
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
-    </div>
-  )
+  return <LayoutShell>{children}</LayoutShell>
 }

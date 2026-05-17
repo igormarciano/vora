@@ -64,7 +64,7 @@ export default function OnboardingPage() {
     if (current < slides.length - 1) {
       setCurrent(current + 1)
     } else {
-      router.push('/dashboard')
+      router.push('/setup')
     }
   }
 
@@ -170,7 +170,7 @@ export default function OnboardingPage() {
 
           {current < slides.length - 1 && (
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/setup')}
               className="text-[14px] text-center"
               style={{ color: '#a5bfa5' }}
             >

@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
-  const protectedPaths = ['/dashboard', '/controle', '/investimentos', '/historico', '/configuracoes', '/onboarding']
+  const protectedPaths = ['/dashboard', '/controle', '/investimentos', '/historico', '/configuracoes', '/onboarding', '/setup']
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
 
   if (!user && isProtected) {
