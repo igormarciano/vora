@@ -10,7 +10,7 @@ const slides = [
     bg: '#f2ede7',
     accentBg: '#dce6dc',
     accentSide: 'right' as const,
-    image: '/images/onboarding1-hero.png',
+    image: '/images/onboarding1-hero.svg',
     imageFlipped: true,
     title: (
       <>
@@ -26,14 +26,14 @@ const slides = [
     bg: '#dce6dc',
     accentBg: null,
     accentSide: null as null,
-    image: '/images/onboarding2-hero.png',
+    image: '/images/onboarding2-hero.svg',
     imageFlipped: false,
     title: <>Simples assim.</>,
     body: 'Você me conta quanto ganha e quais são seus gastos fixos. Eu monto uma projeção dos seus próximos meses.',
     badges: [
-      { icon: '/images/icon-hand-coins.png', label: 'Sua renda entra' },
-      { icon: '/images/icon-piggy-bank.png', label: 'Seus fixos ficam registrados' },
-      { icon: '/images/icon-calendar-heart.png', label: 'Seu mês aparece, antes de acontecer' },
+      { icon: '/images/icon-hand-coins.svg', label: 'Sua renda entra' },
+      { icon: '/images/icon-piggy-bank.svg', label: 'Seus fixos ficam registrados' },
+      { icon: '/images/icon-calendar-heart.svg', label: 'Seu mês aparece, antes de acontecer' },
     ],
     cta: 'Próximo',
   },
@@ -42,7 +42,7 @@ const slides = [
     bg: '#f2ede7',
     accentBg: '#dce6dc',
     accentSide: 'left' as const,
-    image: '/images/onboarding3-hero.png',
+    image: '/images/onboarding3-hero.svg',
     imageFlipped: false,
     title: (
       <>

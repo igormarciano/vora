@@ -34,14 +34,14 @@ export default function LoginPage() {
       {/* Logo */}
       <div className="absolute top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
         <Image
-          src="/images/login-logo-icon.png"
+          src="/images/login-logo-icon.svg"
           alt="Vora logo icon"
           width={28}
           height={28}
           className="object-contain"
         />
         <Image
-          src="/images/vora-wordmark.png"
+          src="/images/vora-wordmark.svg"
           alt="VORA"
           width={80}
           height={22}
@@ -52,7 +52,7 @@ export default function LoginPage() {
       {/* Hero illustration */}
       <div className="flex-1 flex items-center justify-center pt-20 pb-4">
         <Image
-          src="/images/login-hero.png"
+          src="/images/login-hero.svg"
           alt="Ilustração Vora"
           width={280}
           height={280}

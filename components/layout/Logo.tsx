@@ -5,7 +5,7 @@ export function Logo({ collapsed = false }: { collapsed?: boolean }) {
   return (
     <Link href="/dashboard" className="flex items-center gap-2">
       <Image
-        src="/images/login-logo-icon.png"
+        src="/images/login-logo-icon.svg"
         alt="Vora icon"
         width={24}
         height={24}
@@ -13,7 +13,7 @@ export function Logo({ collapsed = false }: { collapsed?: boolean }) {
       />
       {!collapsed && (
         <Image
-          src="/images/vora-wordmark.png"
+          src="/images/vora-wordmark.svg"
           alt="VORA"
           width={68}
           height={18}
