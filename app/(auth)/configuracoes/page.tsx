@@ -1,8 +1,19 @@
-export default function ConfiguracoesPage() {
-  return (
-    <div className="p-8">
-      <h1 className="font-fraunces text-[32px] text-[#3c4a3c]">Configurações</h1>
-      <p className="text-[#6b7280] mt-2">Em breve: meta de economia e preferências.</p>
-    </div>
-  )
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { ConfiguracoesClient } from '@/components/configuracoes/ConfiguracoesClient'
+
+export default async function ConfiguracoesPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) redirect('/login')
+
+  return <ConfiguracoesClient profile={profile} />
 }

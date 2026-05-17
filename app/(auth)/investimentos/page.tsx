@@ -1,8 +1,17 @@
-export default function InvestimentosPage() {
-  return (
-    <div className="p-8">
-      <h1 className="font-fraunces text-[32px] text-[#3c4a3c]">Investimentos</h1>
-      <p className="text-[#6b7280] mt-2">Em breve: carteira e distribuição de investimentos.</p>
-    </div>
-  )
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { InvestimentosClient } from '@/components/investimentos/InvestimentosClient'
+
+export default async function InvestimentosPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: investimentos } = await supabase
+    .from('investimentos')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('data_aporte', { ascending: false })
+
+  return <InvestimentosClient investimentos={investimentos ?? []} />
 }
