@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { CreditCard, Plus, ChevronDown } from 'lucide-react'
+import { CreditCard, Plus, ChevronDown, Filter } from 'lucide-react'
 import type { GastoFixo, GastoVariavel, Cartao, CustomCategory } from '@/types'
 import {
   deletarGastoFixo, deletarGastoVariavel, criarCartao, deletarCartao, editarCorCartao,
@@ -24,6 +24,92 @@ interface GastosClientProps {
 
 type SubTab = 'Fixos' | 'Variáveis'
 type Agrupamento = 'padrao' | 'categoria' | 'cartao'
+type StatusFiltro = 'todos' | 'pago' | 'pendente'
+type Ordenacao = 'recente' | 'antigo' | 'maior_valor' | 'menor_valor' | 'alfabetica'
+
+const ORDENACOES: { key: Ordenacao; label: string }[] = [
+  { key: 'recente', label: 'Mais recentes' },
+  { key: 'antigo', label: 'Mais antigos' },
+  { key: 'maior_valor', label: 'Maior valor' },
+  { key: 'menor_valor', label: 'Menor valor' },
+  { key: 'alfabetica', label: 'Ordem alfabética' },
+]
+
+function ordenarGastos<T extends { nome: string; valor: number; created_at: string }>(items: T[], ordenacao: Ordenacao): T[] {
+  const copy = [...items]
+  switch (ordenacao) {
+    case 'recente': return copy.sort((a, b) => b.created_at.localeCompare(a.created_at))
+    case 'antigo': return copy.sort((a, b) => a.created_at.localeCompare(b.created_at))
+    case 'maior_valor': return copy.sort((a, b) => b.valor - a.valor)
+    case 'menor_valor': return copy.sort((a, b) => a.valor - b.valor)
+    case 'alfabetica': return copy.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+  }
+}
+
+const selectCls = 'border border-[#ece4db] rounded-lg px-2.5 py-1.5 text-[12px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white transition-colors'
+
+interface FiltrosBarProps {
+  categorias: string[]
+  categoria: string | null
+  onCategoriaChange: (c: string | null) => void
+  status: StatusFiltro
+  onStatusChange: (s: StatusFiltro) => void
+  ordenacao: Ordenacao
+  onOrdenacaoChange: (o: Ordenacao) => void
+  tiposPagamento?: { value: string; label: string }[]
+  tipoPagamento?: string | null
+  onTipoPagamentoChange?: (t: string | null) => void
+  onLimpar: () => void
+  ativos: number
+}
+
+function FiltrosBar({
+  categorias, categoria, onCategoriaChange, status, onStatusChange,
+  ordenacao, onOrdenacaoChange, tiposPagamento, tipoPagamento, onTipoPagamentoChange,
+  onLimpar, ativos,
+}: FiltrosBarProps) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 mb-4">
+      <div className="flex items-center gap-1.5">
+        <Filter size={14} className="text-[#6b7280]" />
+        <span className="text-[12px] font-medium text-[#3c4a3c]">Filtros</span>
+        {ativos > 0 && (
+          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#8faf8f] text-white text-[10px] font-semibold">
+            {ativos}
+          </span>
+        )}
+      </div>
+
+      <select value={categoria ?? ''} onChange={e => onCategoriaChange(e.target.value || null)} className={selectCls}>
+        <option value="">Todas categorias</option>
+        {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+      </select>
+
+      <select value={status} onChange={e => onStatusChange(e.target.value as StatusFiltro)} className={selectCls}>
+        <option value="todos">Pago e pendente</option>
+        <option value="pago">Pago</option>
+        <option value="pendente">Pendente</option>
+      </select>
+
+      {tiposPagamento && (
+        <select value={tipoPagamento ?? ''} onChange={e => onTipoPagamentoChange?.(e.target.value || null)} className={selectCls}>
+          <option value="">Todas formas de pagamento</option>
+          {tiposPagamento.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+        </select>
+      )}
+
+      <select value={ordenacao} onChange={e => onOrdenacaoChange(e.target.value as Ordenacao)} className={selectCls}>
+        {ORDENACOES.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+      </select>
+
+      {ativos > 0 && (
+        <button onClick={onLimpar} className="text-[12px] font-medium text-[#8faf8f] hover:text-[#4f604f] transition-colors">
+          Limpar filtros
+        </button>
+      )}
+    </div>
+  )
+}
 
 export function GastosClient({ gastosFixos, gastosVariaveis, cartoes, customCategories }: GastosClientProps) {
   const [subTab, setSubTab] = useState<SubTab>('Fixos')
@@ -69,14 +155,49 @@ export function GastosClient({ gastosFixos, gastosVariaveis, cartoes, customCate
 // ── Fixos ─────────────────────────────────────────────────────────────────────
 
 function FixosSection({ gastos, cartoes, customCategories, total }: { gastos: GastoFixo[]; cartoes: Cartao[]; customCategories: CustomCategory[]; total: number }) {
+  const [categoria, setCategoria] = useState<string | null>(null)
+  const [status, setStatus] = useState<StatusFiltro>('todos')
+  const [ordenacao, setOrdenacao] = useState<Ordenacao>('recente')
+
+  const categorias = useMemo(
+    () => Array.from(new Set(gastos.map(g => g.categoria))).sort((a, b) => a.localeCompare(b, 'pt-BR')),
+    [gastos]
+  )
+
+  const filtrados = useMemo(() => {
+    let result = gastos
+    if (categoria) result = result.filter(g => g.categoria === categoria)
+    if (status !== 'todos') result = result.filter(g => (status === 'pago' ? g.is_paid : !g.is_paid))
+    return ordenarGastos(result, ordenacao)
+  }, [gastos, categoria, status, ordenacao])
+
+  const ativos = (categoria ? 1 : 0) + (status !== 'todos' ? 1 : 0)
+
+  function limpar() {
+    setCategoria(null); setStatus('todos'); setOrdenacao('recente')
+  }
+
   return (
     <div>
       <TotalBlock label="Total em gastos fixos" value={total} />
+
+      {gastos.length > 0 && (
+        <FiltrosBar
+          categorias={categorias}
+          categoria={categoria} onCategoriaChange={setCategoria}
+          status={status} onStatusChange={setStatus}
+          ordenacao={ordenacao} onOrdenacaoChange={setOrdenacao}
+          onLimpar={limpar} ativos={ativos}
+        />
+      )}
+
       <div className="bg-white rounded-2xl border border-[#ece4db] px-4">
         {gastos.length === 0 ? (
           <EmptyState text="Nenhum gasto fixo cadastrado ainda." />
+        ) : filtrados.length === 0 ? (
+          <EmptyState text="Nenhum gasto encontrado com os filtros selecionados." />
         ) : (
-          gastos.map(item => (
+          filtrados.map(item => (
             <GastoCard
               key={item.id}
               nome={item.nome}
@@ -101,9 +222,38 @@ function FixosSection({ gastos, cartoes, customCategories, total }: { gastos: Ga
 
 // ── Variáveis ─────────────────────────────────────────────────────────────────
 
+const TIPOS_PAGAMENTO = [
+  { value: 'dinheiro', label: '💵 Dinheiro' },
+  { value: 'debito', label: '💳 Débito' },
+  { value: 'credito', label: '💳 Crédito' },
+]
+
 function VariaveisSection({ gastos, cartoes, customCategories, total }: { gastos: GastoVariavel[]; cartoes: Cartao[]; customCategories: CustomCategory[]; total: number }) {
   const [agrupamento, setAgrupamento] = useState<Agrupamento>('padrao')
   const [showCartoes, setShowCartoes] = useState(false)
+  const [categoria, setCategoria] = useState<string | null>(null)
+  const [status, setStatus] = useState<StatusFiltro>('todos')
+  const [tipoPagamento, setTipoPagamento] = useState<string | null>(null)
+  const [ordenacao, setOrdenacao] = useState<Ordenacao>('recente')
+
+  const categorias = useMemo(
+    () => Array.from(new Set(gastos.map(g => g.categoria))).sort((a, b) => a.localeCompare(b, 'pt-BR')),
+    [gastos]
+  )
+
+  const filtrados = useMemo(() => {
+    let result = gastos
+    if (categoria) result = result.filter(g => g.categoria === categoria)
+    if (status !== 'todos') result = result.filter(g => (status === 'pago' ? g.is_paid : !g.is_paid))
+    if (tipoPagamento) result = result.filter(g => g.forma_pagamento === tipoPagamento)
+    return ordenarGastos(result, ordenacao)
+  }, [gastos, categoria, status, tipoPagamento, ordenacao])
+
+  const ativos = (categoria ? 1 : 0) + (status !== 'todos' ? 1 : 0) + (tipoPagamento ? 1 : 0)
+
+  function limpar() {
+    setCategoria(null); setStatus('todos'); setTipoPagamento(null); setOrdenacao('recente')
+  }
 
   return (
     <div>
@@ -144,9 +294,20 @@ function VariaveisSection({ gastos, cartoes, customCategories, total }: { gastos
 
       {showCartoes && <GerenciarCartoes cartoes={cartoes} />}
 
-      {agrupamento === 'padrao' && <ListaPadrao gastos={gastos} cartoes={cartoes} customCategories={customCategories} />}
-      {agrupamento === 'categoria' && <ListaPorCategoria gastos={gastos} cartoes={cartoes} customCategories={customCategories} />}
-      {agrupamento === 'cartao' && <ListaPorCartao gastos={gastos} cartoes={cartoes} customCategories={customCategories} />}
+      {gastos.length > 0 && (
+        <FiltrosBar
+          categorias={categorias}
+          categoria={categoria} onCategoriaChange={setCategoria}
+          status={status} onStatusChange={setStatus}
+          tiposPagamento={TIPOS_PAGAMENTO} tipoPagamento={tipoPagamento} onTipoPagamentoChange={setTipoPagamento}
+          ordenacao={ordenacao} onOrdenacaoChange={setOrdenacao}
+          onLimpar={limpar} ativos={ativos}
+        />
+      )}
+
+      {agrupamento === 'padrao' && <ListaPadrao gastos={filtrados} cartoes={cartoes} customCategories={customCategories} />}
+      {agrupamento === 'categoria' && <ListaPorCategoria gastos={filtrados} cartoes={cartoes} customCategories={customCategories} />}
+      {agrupamento === 'cartao' && <ListaPorCartao gastos={filtrados} cartoes={cartoes} customCategories={customCategories} />}
     </div>
   )
 }
