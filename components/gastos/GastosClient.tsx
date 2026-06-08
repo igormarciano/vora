@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { CreditCard, Plus, ChevronDown } from 'lucide-react'
 import type { GastoFixo, GastoVariavel, Cartao } from '@/types'
 import {
-  deletarGastoFixo, deletarGastoVariavel, criarCartao, deletarCartao,
+  deletarGastoFixo, deletarGastoVariavel, criarCartao, deletarCartao, editarCorCartao,
   alternarPagoGastoFixo, alternarPagoGastoVariavel,
 } from '@/app/(auth)/controle/actions'
 import { FormGastoFixo } from '@/components/controle/FormGastoFixo'
@@ -230,6 +230,7 @@ function ListaPorCartao({ gastos, cartoes }: { gastos: GastoVariavel[]; cartoes:
           <div key={cartao?.id ?? 'outros'}>
             <div className="flex items-center justify-between mb-2 px-1">
               <span className="flex items-center gap-2 text-[13px] font-medium text-[#3c4a3c]">
+                {cartao?.color && <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cartao.color }} />}
                 <CreditCard size={14} className="text-[#6b7280]" />
                 {cartao ? cartao.nome : 'Outros (sem cartão)'}
               </span>
@@ -277,20 +278,34 @@ function VariavelRow({ item, cartoes }: { item: GastoVariavel; cartoes: Cartao[]
 
 // ── Gerenciar cartões (inline, dentro de Variáveis) ───────────────────────────
 
+// Item 3.9: paleta predefinida com cores do design system Vora
+const PALETA_CARTOES = [
+  { nome: 'Sálvia', valor: '#8faf8f' },
+  { nome: 'Verde escuro', valor: '#3c4a3c' },
+  { nome: 'Verde-claro', valor: '#a5bfa5' },
+  { nome: 'Menta', valor: '#57cc99' },
+  { nome: 'Petróleo', valor: '#38a3a5' },
+  { nome: 'Areia', valor: '#d7cfc7' },
+  { nome: 'Âmbar', valor: '#f59e0b' },
+  { nome: 'Coral', valor: '#dc2626' },
+]
+
 function GerenciarCartoes({ cartoes }: { cartoes: Cartao[] }) {
   const [showForm, setShowForm] = useState(false)
   const [nome, setNome] = useState('')
+  const [color, setColor] = useState<string>(PALETA_CARTOES[0].valor)
   const [loading, setLoading] = useState(false)
 
   async function handleCriar(e: React.FormEvent) {
     e.preventDefault()
     if (!nome.trim()) return
     setLoading(true)
-    const result = await criarCartao({ nome: nome.trim() })
+    const result = await criarCartao({ nome: nome.trim(), color })
     setLoading(false)
     if (result.error) { toast.error(result.error); return }
     toast.success('Cartão adicionado!')
     setNome('')
+    setColor(PALETA_CARTOES[0].valor)
     setShowForm(false)
   }
 
@@ -307,22 +322,25 @@ function GerenciarCartoes({ cartoes }: { cartoes: Cartao[] }) {
       </div>
 
       {showForm && (
-        <form onSubmit={handleCriar} className="flex gap-2 mb-3">
-          <input
-            value={nome}
-            onChange={e => setNome(e.target.value)}
-            placeholder="Nome do cartão..."
-            className="flex-1 border border-[#ece4db] rounded-lg px-3 py-2 text-[14px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white"
-            autoFocus
-          />
-          <button type="submit" disabled={loading}
-            className="px-4 py-2 text-[13px] font-medium bg-[#8faf8f] text-white rounded-lg hover:opacity-90 disabled:opacity-60">
-            {loading ? '...' : 'Salvar'}
-          </button>
-          <button type="button" onClick={() => { setShowForm(false); setNome('') }}
-            className="px-3 py-2 text-[13px] text-[#6b7280] hover:text-[#3c4a3c]">
-            Cancelar
-          </button>
+        <form onSubmit={handleCriar} className="flex flex-col gap-3 mb-3 bg-white border border-[#ece4db] rounded-xl p-3">
+          <div className="flex gap-2">
+            <input
+              value={nome}
+              onChange={e => setNome(e.target.value)}
+              placeholder="Nome do cartão..."
+              className="flex-1 border border-[#ece4db] rounded-lg px-3 py-2 text-[14px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white"
+              autoFocus
+            />
+            <button type="submit" disabled={loading}
+              className="px-4 py-2 text-[13px] font-medium bg-[#8faf8f] text-white rounded-lg hover:opacity-90 disabled:opacity-60">
+              {loading ? '...' : 'Salvar'}
+            </button>
+            <button type="button" onClick={() => { setShowForm(false); setNome('') }}
+              className="px-3 py-2 text-[13px] text-[#6b7280] hover:text-[#3c4a3c]">
+              Cancelar
+            </button>
+          </div>
+          <PaletaCores value={color} onChange={setColor} />
         </form>
       )}
 
@@ -330,17 +348,72 @@ function GerenciarCartoes({ cartoes }: { cartoes: Cartao[] }) {
         <p className="text-[13px] text-[#9ca3af] text-center py-2">Nenhum cartão cadastrado ainda.</p>
       ) : (
         <div className="flex flex-col gap-1.5">
-          {cartoes.map(cartao => (
-            <div key={cartao.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-[#ece4db]">
-              <span className="flex items-center gap-2 text-[14px] text-[#3c4a3c]">
-                <CreditCard size={15} className="text-[#6b7280]" />
-                {cartao.nome}
-              </span>
-              <ModalDelete label={cartao.nome} onConfirm={() => deletarCartao(cartao.id)} />
-            </div>
-          ))}
+          {cartoes.map(cartao => <CartaoRow key={cartao.id} cartao={cartao} />)}
         </div>
       )}
+    </div>
+  )
+}
+
+function PaletaCores({ value, onChange }: { value: string; onChange: (color: string) => void }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[12px] text-[#6b7280]">Cor do cartão</span>
+      <div className="flex gap-2 flex-wrap">
+        {PALETA_CARTOES.map(c => (
+          <button
+            key={c.valor}
+            type="button"
+            title={c.nome}
+            onClick={() => onChange(c.valor)}
+            className="w-7 h-7 rounded-full transition-transform"
+            style={{
+              backgroundColor: c.valor,
+              outline: value === c.valor ? '2px solid #3c4a3c' : 'none',
+              outlineOffset: '2px',
+              transform: value === c.valor ? 'scale(1.08)' : 'scale(1)',
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function CartaoRow({ cartao }: { cartao: Cartao }) {
+  const [editingColor, setEditingColor] = useState(false)
+  const [color, setColor] = useState(cartao.color ?? PALETA_CARTOES[0].valor)
+  const [saving, setSaving] = useState(false)
+
+  async function handlePickColor(novaCor: string) {
+    setColor(novaCor)
+    setSaving(true)
+    const result = await editarCorCartao(cartao.id, novaCor)
+    setSaving(false)
+    if (result.error) { toast.error(result.error); return }
+    setEditingColor(false)
+  }
+
+  return (
+    <div className="flex flex-col gap-2 bg-white rounded-lg px-3 py-2 border border-[#ece4db]">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-2 text-[14px] text-[#3c4a3c]">
+          <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
+          <CreditCard size={15} className="text-[#6b7280]" />
+          {cartao.nome}
+        </span>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setEditingColor(v => !v)}
+            disabled={saving}
+            className="text-[12px] text-[#8faf8f] hover:text-[#4f604f] transition-colors px-2 py-1"
+          >
+            Cor
+          </button>
+          <ModalDelete label={cartao.nome} onConfirm={() => deletarCartao(cartao.id)} />
+        </div>
+      </div>
+      {editingColor && <PaletaCores value={color} onChange={handlePickColor} />}
     </div>
   )
 }
