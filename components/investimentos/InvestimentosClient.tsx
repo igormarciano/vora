@@ -1,13 +1,78 @@
 'use client'
 
-import type { Investimento } from '@/types'
-import { deletarInvestimento } from '@/app/(auth)/investimentos/actions'
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { Sprout } from 'lucide-react'
+import type { Investimento, PendenciaInvestimento } from '@/types'
+import { deletarInvestimento, dispensarSobraInvestimento } from '@/app/(auth)/investimentos/actions'
 import { FormInvestimento } from './FormInvestimento'
+import { ModalInvestirSobra } from './ModalInvestirSobra'
 import { ModalDelete } from '@/components/controle/ModalDelete'
 import { formatCurrency } from '@/lib/engine'
 
 interface InvestimentosClientProps {
   investimentos: Investimento[]
+  /** Mês de referência atual (YYYY-MM-DD) usado para calcular e controlar a sobra */
+  mes: string
+  /** Sobra (economia) calculada para o mês de referência atual */
+  sobra: number
+  /** Pendência de investimento já registrada para este mês, se houver */
+  pendencia: PendenciaInvestimento | null
+}
+
+/** Bloco de chamada para investir a sobra do mês — item 3.12 */
+function InvestirSobraBanner({ mes, sobra, pendencia }: { mes: string; sobra: number; pendencia: PendenciaInvestimento | null }) {
+  const [open, setOpen] = useState(false)
+  const [dispensando, setDispensando] = useState(false)
+
+  const disponivel = pendencia ? pendencia.valor_restante : sobra
+  const jaDecidido = pendencia?.status === 'dispensado' || (pendencia?.status === 'distribuido' && pendencia.valor_restante <= 0)
+
+  if (sobra <= 0 || disponivel <= 0 || jaDecidido) return null
+
+  async function handleDispensar() {
+    setDispensando(true)
+    const result = await dispensarSobraInvestimento(mes, sobra)
+    setDispensando(false)
+    if (result.error) { toast.error(result.error); return }
+    toast.success('Tudo bem — você pode investir essa sobra quando quiser.')
+  }
+
+  return (
+    <>
+      <div className="bg-[#dce6dc] rounded-2xl p-5 mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="w-11 h-11 rounded-xl bg-[#b4c9b4] flex items-center justify-center text-[20px] shrink-0">
+          🌱
+        </div>
+        <div className="flex-1">
+          <p className="font-fraunces text-[17px] text-[#3c4a3c] leading-tight">
+            Você tem {formatCurrency(disponivel)} de sobra {pendencia ? 'restante' : ''} este mês
+          </p>
+          <p className="text-[13px] text-[#4f604f] mt-0.5">
+            Que tal transformar parte dessa sobra em investimento e fazer seu patrimônio crescer?
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={handleDispensar}
+            disabled={dispensando}
+            className="text-[13px] text-[#6b7280] hover:text-[#3c4a3c] transition-colors px-2 py-2 disabled:opacity-60"
+          >
+            Agora não
+          </button>
+          <button
+            onClick={() => setOpen(true)}
+            className="flex items-center gap-2 text-[14px] font-medium px-4 py-2.5 rounded-xl bg-[#8faf8f] text-white hover:opacity-90 transition-opacity"
+          >
+            <Sprout size={16} />
+            Investir sobra
+          </button>
+        </div>
+      </div>
+
+      <ModalInvestirSobra open={open} onOpenChange={setOpen} disponivel={disponivel} mes={mes} />
+    </>
+  )
 }
 
 const CATEGORIAS = {
@@ -18,7 +83,7 @@ const CATEGORIAS = {
   internacional: { label: 'Internacional', emoji: '🌎', cor: '#dbeafe' },
 } as const
 
-export function InvestimentosClient({ investimentos }: InvestimentosClientProps) {
+export function InvestimentosClient({ investimentos, mes, sobra, pendencia }: InvestimentosClientProps) {
   const total = investimentos.reduce((s, i) => s + i.valor, 0)
 
   const porCategoria = Object.entries(CATEGORIAS).map(([key, cfg]) => {
@@ -40,6 +105,8 @@ export function InvestimentosClient({ investimentos }: InvestimentosClientProps)
         </div>
         <FormInvestimento />
       </div>
+
+      <InvestirSobraBanner mes={mes} sobra={sobra} pendencia={pendencia} />
 
       {investimentos.length === 0 ? (
         <div className="bg-white rounded-2xl border border-[#ece4db] px-6 py-10 text-center">

@@ -135,6 +135,14 @@ middleware.ts    → proteção de rotas + refresh de sessão
   - `cartoes.color` (text, hex) — cor do cartão escolhida na paleta predefinida (item 3.9)
   - tabela `custom_categories` (id, user_id, emoji, nome, contexto `'fixo'|'variavel'|'ambos'`, created_at) com RLS por `user_id` — categorias personalizadas (item 3.4)
 
+> Nenhuma migration nova foi necessária para o item 3.12 (transferência de sobra para
+> investimentos): a tabela `pendencias_investimento` (id, user_id, valor_disponivel,
+> valor_restante, mes_referencia, status `'pendente'|'distribuido'|'dispensado'`,
+> created_at) já existia no banco, com RLS habilitada, porém não era usada em nenhum
+> lugar do código. Passou a ser usada para controlar quanto da sobra do mês já foi
+> distribuído entre investimentos (ver `app/(auth)/investimentos/actions.ts` —
+> `investirSobra` e `dispensarSobraInvestimento`).
+
 ---
 
 ## O que NÃO construir neste MVP
