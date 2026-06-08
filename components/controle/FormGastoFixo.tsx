@@ -11,6 +11,10 @@ interface FormGastoFixoProps {
   item?: GastoFixo
   cartoes: Cartao[]
   onSuccess?: () => void
+  /** Modo controlado: oculta o botão de gatilho e usa open/onOpenChange externos (usado pelo modal unificado) */
+  hideTrigger?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 const CATEGORIAS = [
@@ -19,8 +23,10 @@ const CATEGORIAS = [
   '💳 Financiamento', '🔧 Manutenção', '🐾 Pets', '🔖 Outros',
 ]
 
-export function FormGastoFixo({ item, cartoes, onSuccess }: FormGastoFixoProps) {
-  const [open, setOpen] = useState(false)
+export function FormGastoFixo({ item, cartoes, onSuccess, hideTrigger, open: openProp, onOpenChange }: FormGastoFixoProps) {
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = openProp ?? internalOpen
+  const setOpen = onOpenChange ?? setInternalOpen
   const [loading, setLoading] = useState(false)
   const [nome, setNome] = useState(item?.nome ?? '')
   const [valor, setValor] = useState<number | null>(item ? item.valor : null)
@@ -62,16 +68,18 @@ export function FormGastoFixo({ item, cartoes, onSuccess }: FormGastoFixoProps) 
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className={item
-          ? 'p-1.5 rounded text-[#6b7280] hover:text-[#3c4a3c] hover:bg-[#f2ede7] transition-colors'
-          : 'flex items-center gap-2 text-[14px] font-medium text-[#8faf8f] hover:text-[#4f604f] transition-colors'
-        }
-        title={item ? 'Editar' : undefined}
-      >
-        {item ? <Pencil size={15} /> : <><Plus size={16} /><span>Adicionar gasto fixo</span></>}
-      </button>
+      {!hideTrigger && (
+        <button
+          onClick={() => setOpen(true)}
+          className={item
+            ? 'p-1.5 rounded text-[#6b7280] hover:text-[#3c4a3c] hover:bg-[#f2ede7] transition-colors'
+            : 'flex items-center gap-2 text-[14px] font-medium text-[#8faf8f] hover:text-[#4f604f] transition-colors'
+          }
+          title={item ? 'Editar' : undefined}
+        >
+          {item ? <Pencil size={15} /> : <><Plus size={16} /><span>Adicionar gasto fixo</span></>}
+        </button>
+      )}
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">

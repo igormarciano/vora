@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  LayoutDashboard, Wallet, TrendingUp, History,
+  LayoutDashboard, PiggyBank, Receipt, TrendingUp, History,
   Settings, LogOut, ChevronLeft, ChevronRight, X,
 } from 'lucide-react'
 import { Logo } from './Logo'
@@ -12,7 +12,8 @@ import { toast } from 'sonner'
 
 const navItems = [
   { href: '/dashboard',      label: 'Visão geral',   icon: LayoutDashboard },
-  { href: '/controle',       label: 'Controle',       icon: Wallet },
+  { href: '/receitas',       label: 'Receitas',       icon: PiggyBank },
+  { href: '/gastos',         label: 'Gastos',         icon: Receipt },
   { href: '/investimentos',  label: 'Investimentos',  icon: TrendingUp },
   { href: '/historico',      label: 'Histórico',      icon: History },
   { href: '/configuracoes',  label: 'Configurações',  icon: Settings },

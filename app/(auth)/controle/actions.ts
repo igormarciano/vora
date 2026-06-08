@@ -25,7 +25,8 @@ export async function criarReceita(data: {
   })
 
   if (error) return { error: error.message }
-  revalidatePath('/controle')
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
   revalidatePath('/dashboard')
   return {}
 }
@@ -44,7 +45,8 @@ export async function editarReceita(id: string, data: {
 
   const { error } = await supabase.from('receitas').update(data).eq('id', id).eq('user_id', user.id)
   if (error) return { error: error.message }
-  revalidatePath('/controle')
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
   revalidatePath('/dashboard')
   return {}
 }
@@ -56,7 +58,8 @@ export async function deletarReceita(id: string) {
 
   const { error } = await supabase.from('receitas').delete().eq('id', id).eq('user_id', user.id)
   if (error) return { error: error.message }
-  revalidatePath('/controle')
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
   revalidatePath('/dashboard')
   return {}
 }
@@ -83,7 +86,8 @@ export async function criarGastoFixo(data: {
   })
 
   if (error) return { error: error.message }
-  revalidatePath('/controle')
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
   revalidatePath('/dashboard')
   return {}
 }
@@ -103,7 +107,8 @@ export async function editarGastoFixo(id: string, data: {
 
   const { error } = await supabase.from('gastos_fixos').update(data).eq('id', id).eq('user_id', user.id)
   if (error) return { error: error.message }
-  revalidatePath('/controle')
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
   revalidatePath('/dashboard')
   return {}
 }
@@ -115,7 +120,8 @@ export async function deletarGastoFixo(id: string) {
 
   const { error } = await supabase.from('gastos_fixos').delete().eq('id', id).eq('user_id', user.id)
   if (error) return { error: error.message }
-  revalidatePath('/controle')
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
   revalidatePath('/dashboard')
   return {}
 }
@@ -143,7 +149,8 @@ export async function criarGastoVariavel(data: {
   })
 
   if (error) return { error: error.message }
-  revalidatePath('/controle')
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
   revalidatePath('/dashboard')
   return {}
 }
@@ -164,7 +171,8 @@ export async function editarGastoVariavel(id: string, data: {
 
   const { error } = await supabase.from('gastos_variaveis').update(data).eq('id', id).eq('user_id', user.id)
   if (error) return { error: error.message }
-  revalidatePath('/controle')
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
   revalidatePath('/dashboard')
   return {}
 }
@@ -176,7 +184,8 @@ export async function deletarGastoVariavel(id: string) {
 
   const { error } = await supabase.from('gastos_variaveis').delete().eq('id', id).eq('user_id', user.id)
   if (error) return { error: error.message }
-  revalidatePath('/controle')
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
   revalidatePath('/dashboard')
   return {}
 }
@@ -190,7 +199,8 @@ export async function criarCartao(data: { nome: string; bandeira?: string; limit
 
   const { error } = await supabase.from('cartoes').insert({ ...data, user_id: user.id })
   if (error) return { error: error.message }
-  revalidatePath('/controle')
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
   return {}
 }
 
@@ -201,6 +211,7 @@ export async function deletarCartao(id: string) {
 
   const { error } = await supabase.from('cartoes').delete().eq('id', id).eq('user_id', user.id)
   if (error) return { error: error.message }
-  revalidatePath('/controle')
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
   return {}
 }
