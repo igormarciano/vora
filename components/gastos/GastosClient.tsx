@@ -1,8 +1,9 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { toast } from 'sonner'
-import { CreditCard, Plus, ChevronDown, Filter } from 'lucide-react'
+import { CreditCard, Plus, ChevronDown, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
 import type { GastoFixo, GastoVariavel, Cartao, CustomCategory } from '@/types'
 import {
   deletarGastoFixo, deletarGastoVariavel, criarCartao, deletarCartao, editarCorCartao,
@@ -13,13 +14,46 @@ import { FormGastoVariavel } from '@/components/controle/FormGastoVariavel'
 import { ModalDelete } from '@/components/controle/ModalDelete'
 import { ModalAdicionarGasto } from './ModalAdicionarGasto'
 import { GastoCard } from './GastoCard'
-import { formatCurrency } from '@/lib/engine'
+import { formatCurrency, deslocarMesReferencia, formatarMesReferencia } from '@/lib/engine'
 
 interface GastosClientProps {
+  mes: string
   gastosFixos: GastoFixo[]
   gastosVariaveis: GastoVariavel[]
   cartoes: Cartao[]
   customCategories: CustomCategory[]
+}
+
+/** Navegação entre meses — atualiza o parâmetro `mes` na URL, recarregando os dados via server component. */
+function MonthNavigator({ mes }: { mes: string }) {
+  const router = useRouter()
+  const pathname = usePathname()
+
+  function navegar(novoMes: string) {
+    router.push(`${pathname}?mes=${novoMes}`)
+  }
+
+  return (
+    <div className="flex items-center justify-center gap-4 mb-6">
+      <button
+        onClick={() => navegar(deslocarMesReferencia(mes, -1))}
+        className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#3c4a3c] hover:bg-[#f2ede7] transition-colors"
+        aria-label="Mês anterior"
+      >
+        <ChevronLeft size={18} />
+      </button>
+      <span className="font-fraunces text-[17px] text-[#3c4a3c] capitalize min-w-[180px] text-center">
+        {formatarMesReferencia(mes)}
+      </span>
+      <button
+        onClick={() => navegar(deslocarMesReferencia(mes, 1))}
+        className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#3c4a3c] hover:bg-[#f2ede7] transition-colors"
+        aria-label="Próximo mês"
+      >
+        <ChevronRight size={18} />
+      </button>
+    </div>
+  )
 }
 
 type SubTab = 'Fixos' | 'Variáveis'
@@ -111,18 +145,23 @@ function FiltrosBar({
   )
 }
 
-export function GastosClient({ gastosFixos, gastosVariaveis, cartoes, customCategories }: GastosClientProps) {
+export function GastosClient({ mes, gastosFixos, gastosVariaveis, cartoes, customCategories }: GastosClientProps) {
   const [subTab, setSubTab] = useState<SubTab>('Fixos')
 
   const totalFixos = gastosFixos.reduce((s, g) => s + g.valor, 0)
-  const totalVariaveis = gastosVariaveis.reduce((s, g) => s + g.valor, 0)
+  const totalVariaveis = gastosVariaveis.reduce((s, g) => {
+    const valor = g.parcelado && g.valor_parcela != null ? g.valor_parcela : g.valor
+    return s + valor
+  }, 0)
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-2">
         <h1 className="font-fraunces text-[32px] text-[#3c4a3c]">Gastos</h1>
         <ModalAdicionarGasto cartoes={cartoes} customCategories={customCategories} defaultTipo={subTab === 'Fixos' ? 'fixo' : 'variavel'} onSuccess={() => {}} />
       </div>
+
+      <MonthNavigator mes={mes} />
 
       {/* Subnavegação Fixos / Variáveis */}
       <div className="flex gap-1 bg-[#f2ede7] rounded-xl p-1 mb-6">
