@@ -15,5 +15,11 @@ export default async function ConfiguracoesPage() {
 
   if (!profile) redirect('/login')
 
-  return <ConfiguracoesClient profile={profile} />
+  const { data: customCategories } = await supabase
+    .from('custom_categories')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+
+  return <ConfiguracoesClient profile={profile} customCategories={customCategories ?? []} />
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, Repeat, ShoppingBag } from 'lucide-react'
-import type { Cartao } from '@/types'
+import type { Cartao, CustomCategory } from '@/types'
 import { FormGastoFixo } from '@/components/controle/FormGastoFixo'
 import { FormGastoVariavel } from '@/components/controle/FormGastoVariavel'
 
@@ -10,6 +10,7 @@ type TipoGasto = 'fixo' | 'variavel'
 
 interface ModalAdicionarGastoProps {
   cartoes: Cartao[]
+  customCategories?: CustomCategory[]
   /** Se definido, pula a tela de seleção e abre direto no formulário do tipo */
   defaultTipo?: TipoGasto
   onSuccess?: () => void
@@ -21,7 +22,7 @@ interface ModalAdicionarGastoProps {
  * Se `defaultTipo` for informado (ex: usuário está na subaba "Fixos"),
  * pula a etapa de seleção e abre direto no formulário correspondente.
  */
-export function ModalAdicionarGasto({ cartoes, defaultTipo, onSuccess, label = 'Adicionar gasto' }: ModalAdicionarGastoProps) {
+export function ModalAdicionarGasto({ cartoes, customCategories = [], defaultTipo, onSuccess, label = 'Adicionar gasto' }: ModalAdicionarGastoProps) {
   const [open, setOpen] = useState(false)
   const [tipo, setTipo] = useState<TipoGasto | null>(defaultTipo ?? null)
 
@@ -86,10 +87,10 @@ export function ModalAdicionarGasto({ cartoes, defaultTipo, onSuccess, label = '
 
       {/* Formulário (controlado) — renderizado fora da árvore de seleção para reaproveitar os forms existentes */}
       {open && tipo === 'fixo' && (
-        <FormGastoFixo cartoes={cartoes} hideTrigger open={open} onOpenChange={setOpen} onSuccess={handleSuccess} />
+        <FormGastoFixo cartoes={cartoes} customCategories={customCategories} hideTrigger open={open} onOpenChange={setOpen} onSuccess={handleSuccess} />
       )}
       {open && tipo === 'variavel' && (
-        <FormGastoVariavel cartoes={cartoes} hideTrigger open={open} onOpenChange={setOpen} onSuccess={handleSuccess} />
+        <FormGastoVariavel cartoes={cartoes} customCategories={customCategories} hideTrigger open={open} onOpenChange={setOpen} onSuccess={handleSuccess} />
       )}
     </>
   )

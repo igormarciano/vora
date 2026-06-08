@@ -2,16 +2,18 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import type { Profile } from '@/types'
+import type { Profile, CustomCategory } from '@/types'
 import { atualizarPerfil } from '@/app/(auth)/configuracoes/actions'
+import { CustomCategoriesManager } from './CustomCategoriesManager'
 
 interface ConfiguracoesClientProps {
   profile: Profile
+  customCategories: CustomCategory[]
 }
 
 const inputCls = 'border border-[#ece4db] rounded-lg px-3 py-2.5 text-[15px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white transition-colors w-full'
 
-export function ConfiguracoesClient({ profile }: ConfiguracoesClientProps) {
+export function ConfiguracoesClient({ profile, customCategories }: ConfiguracoesClientProps) {
   const [nome, setNome] = useState(profile.nome ?? '')
   const [meta, setMeta] = useState(String(profile.meta_economia_percentual))
   const [loading, setLoading] = useState(false)
@@ -96,6 +98,10 @@ export function ConfiguracoesClient({ profile }: ConfiguracoesClientProps) {
           {loading ? 'Salvando...' : 'Salvar configurações'}
         </button>
       </form>
+
+      <div className="mt-6">
+        <CustomCategoriesManager categories={customCategories} />
+      </div>
     </div>
   )
 }

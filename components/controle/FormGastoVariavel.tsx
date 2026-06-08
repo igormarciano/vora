@@ -3,13 +3,15 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Pencil, Plus } from 'lucide-react'
-import type { GastoVariavel, Cartao } from '@/types'
+import type { GastoVariavel, Cartao, CustomCategory } from '@/types'
 import { criarGastoVariavel, editarGastoVariavel } from '@/app/(auth)/controle/actions'
 import { CurrencyInput } from '@/components/ui/CurrencyInput'
+import { CategorySelect } from '@/components/controle/CategorySelect'
 
 interface FormGastoVariavelProps {
   item?: GastoVariavel
   cartoes: Cartao[]
+  customCategories?: CustomCategory[]
   onSuccess?: () => void
   /** Modo controlado: oculta o botão de gatilho e usa open/onOpenChange externos (usado pelo modal unificado) */
   hideTrigger?: boolean
@@ -23,7 +25,7 @@ const CATEGORIAS = [
   '📦 Compras online', '⛽ Combustível', '💼 Trabalho', '🔧 Outros',
 ]
 
-export function FormGastoVariavel({ item, cartoes, onSuccess, hideTrigger, open: openProp, onOpenChange }: FormGastoVariavelProps) {
+export function FormGastoVariavel({ item, cartoes, customCategories = [], onSuccess, hideTrigger, open: openProp, onOpenChange }: FormGastoVariavelProps) {
   const [internalOpen, setInternalOpen] = useState(false)
   const open = openProp ?? internalOpen
   const setOpen = onOpenChange ?? setInternalOpen
@@ -116,9 +118,13 @@ export function FormGastoVariavel({ item, cartoes, onSuccess, hideTrigger, open:
               </Field>
 
               <Field label="Categoria">
-                <select value={categoria} onChange={e => setCategoria(e.target.value)} className={inputCls}>
-                  {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <CategorySelect
+                  value={categoria}
+                  onChange={setCategoria}
+                  categoriasPadrao={CATEGORIAS}
+                  customCategories={customCategories}
+                  contexto="variavel"
+                />
               </Field>
 
               <Field label="Descrição (opcional)">

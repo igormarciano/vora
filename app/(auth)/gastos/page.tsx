@@ -10,11 +10,12 @@ export default async function GastosPage() {
 
   const mes = getMesReferencia()
 
-  const [{ data: gastosFixos }, { data: gastosVariaveis }, { data: cartoes }] =
+  const [{ data: gastosFixos }, { data: gastosVariaveis }, { data: cartoes }, { data: customCategories }] =
     await Promise.all([
       supabase.from('gastos_fixos').select('*').eq('user_id', user.id).eq('mes_referencia', mes).order('created_at', { ascending: false }),
       supabase.from('gastos_variaveis').select('*').eq('user_id', user.id).eq('mes_referencia', mes).order('created_at', { ascending: false }),
       supabase.from('cartoes').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('custom_categories').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
     ])
 
   return (
@@ -22,6 +23,7 @@ export default async function GastosPage() {
       gastosFixos={gastosFixos ?? []}
       gastosVariaveis={gastosVariaveis ?? []}
       cartoes={cartoes ?? []}
+      customCategories={customCategories ?? []}
     />
   )
 }

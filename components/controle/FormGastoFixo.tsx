@@ -3,13 +3,15 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Pencil, Plus } from 'lucide-react'
-import type { GastoFixo, Cartao, PersonType } from '@/types'
+import type { GastoFixo, Cartao, PersonType, CustomCategory } from '@/types'
 import { criarGastoFixo, editarGastoFixo } from '@/app/(auth)/controle/actions'
 import { CurrencyInput } from '@/components/ui/CurrencyInput'
+import { CategorySelect } from '@/components/controle/CategorySelect'
 
 interface FormGastoFixoProps {
   item?: GastoFixo
   cartoes: Cartao[]
+  customCategories?: CustomCategory[]
   onSuccess?: () => void
   /** Modo controlado: oculta o botão de gatilho e usa open/onOpenChange externos (usado pelo modal unificado) */
   hideTrigger?: boolean
@@ -29,7 +31,7 @@ const CATEGORIAS_PJ = [
   '📣 Marketing', '🔖 Outros',
 ]
 
-export function FormGastoFixo({ item, cartoes, onSuccess, hideTrigger, open: openProp, onOpenChange }: FormGastoFixoProps) {
+export function FormGastoFixo({ item, cartoes, customCategories = [], onSuccess, hideTrigger, open: openProp, onOpenChange }: FormGastoFixoProps) {
   const [internalOpen, setInternalOpen] = useState(false)
   const open = openProp ?? internalOpen
   const setOpen = onOpenChange ?? setInternalOpen
@@ -138,9 +140,13 @@ export function FormGastoFixo({ item, cartoes, onSuccess, hideTrigger, open: ope
               </Field>
 
               <Field label="Categoria">
-                <select value={categoria} onChange={e => setCategoria(e.target.value)} className={inputCls}>
-                  {categorias.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <CategorySelect
+                  value={categoria}
+                  onChange={setCategoria}
+                  categoriasPadrao={categorias}
+                  customCategories={customCategories}
+                  contexto="fixo"
+                />
               </Field>
 
               <Field label="Descrição (opcional)">

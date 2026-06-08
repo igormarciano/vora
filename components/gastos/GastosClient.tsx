@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { CreditCard, Plus, ChevronDown } from 'lucide-react'
-import type { GastoFixo, GastoVariavel, Cartao } from '@/types'
+import type { GastoFixo, GastoVariavel, Cartao, CustomCategory } from '@/types'
 import {
   deletarGastoFixo, deletarGastoVariavel, criarCartao, deletarCartao, editarCorCartao,
   alternarPagoGastoFixo, alternarPagoGastoVariavel,
@@ -19,12 +19,13 @@ interface GastosClientProps {
   gastosFixos: GastoFixo[]
   gastosVariaveis: GastoVariavel[]
   cartoes: Cartao[]
+  customCategories: CustomCategory[]
 }
 
 type SubTab = 'Fixos' | 'Variáveis'
 type Agrupamento = 'padrao' | 'categoria' | 'cartao'
 
-export function GastosClient({ gastosFixos, gastosVariaveis, cartoes }: GastosClientProps) {
+export function GastosClient({ gastosFixos, gastosVariaveis, cartoes, customCategories }: GastosClientProps) {
   const [subTab, setSubTab] = useState<SubTab>('Fixos')
 
   const totalFixos = gastosFixos.reduce((s, g) => s + g.valor, 0)
@@ -34,7 +35,7 @@ export function GastosClient({ gastosFixos, gastosVariaveis, cartoes }: GastosCl
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-fraunces text-[32px] text-[#3c4a3c]">Gastos</h1>
-        <ModalAdicionarGasto cartoes={cartoes} defaultTipo={subTab === 'Fixos' ? 'fixo' : 'variavel'} onSuccess={() => {}} />
+        <ModalAdicionarGasto cartoes={cartoes} customCategories={customCategories} defaultTipo={subTab === 'Fixos' ? 'fixo' : 'variavel'} onSuccess={() => {}} />
       </div>
 
       {/* Subnavegação Fixos / Variáveis */}
@@ -56,10 +57,10 @@ export function GastosClient({ gastosFixos, gastosVariaveis, cartoes }: GastosCl
       </div>
 
       {subTab === 'Fixos' && (
-        <FixosSection gastos={gastosFixos} cartoes={cartoes} total={totalFixos} />
+        <FixosSection gastos={gastosFixos} cartoes={cartoes} customCategories={customCategories} total={totalFixos} />
       )}
       {subTab === 'Variáveis' && (
-        <VariaveisSection gastos={gastosVariaveis} cartoes={cartoes} total={totalVariaveis} />
+        <VariaveisSection gastos={gastosVariaveis} cartoes={cartoes} customCategories={customCategories} total={totalVariaveis} />
       )}
     </div>
   )
@@ -67,7 +68,7 @@ export function GastosClient({ gastosFixos, gastosVariaveis, cartoes }: GastosCl
 
 // ── Fixos ─────────────────────────────────────────────────────────────────────
 
-function FixosSection({ gastos, cartoes, total }: { gastos: GastoFixo[]; cartoes: Cartao[]; total: number }) {
+function FixosSection({ gastos, cartoes, customCategories, total }: { gastos: GastoFixo[]; cartoes: Cartao[]; customCategories: CustomCategory[]; total: number }) {
   return (
     <div>
       <TotalBlock label="Total em gastos fixos" value={total} />
@@ -88,7 +89,7 @@ function FixosSection({ gastos, cartoes, total }: { gastos: GastoFixo[]; cartoes
               description={item.description}
               isPaid={item.is_paid}
               onTogglePaid={paid => alternarPagoGastoFixo(item.id, paid)}
-              editButton={<FormGastoFixo item={item} cartoes={cartoes} onSuccess={() => {}} />}
+              editButton={<FormGastoFixo item={item} cartoes={cartoes} customCategories={customCategories} onSuccess={() => {}} />}
               deleteButton={<ModalDelete label={item.nome} onConfirm={() => deletarGastoFixo(item.id)} />}
             />
           ))
@@ -100,7 +101,7 @@ function FixosSection({ gastos, cartoes, total }: { gastos: GastoFixo[]; cartoes
 
 // ── Variáveis ─────────────────────────────────────────────────────────────────
 
-function VariaveisSection({ gastos, cartoes, total }: { gastos: GastoVariavel[]; cartoes: Cartao[]; total: number }) {
+function VariaveisSection({ gastos, cartoes, customCategories, total }: { gastos: GastoVariavel[]; cartoes: Cartao[]; customCategories: CustomCategory[]; total: number }) {
   const [agrupamento, setAgrupamento] = useState<Agrupamento>('padrao')
   const [showCartoes, setShowCartoes] = useState(false)
 
@@ -143,26 +144,26 @@ function VariaveisSection({ gastos, cartoes, total }: { gastos: GastoVariavel[];
 
       {showCartoes && <GerenciarCartoes cartoes={cartoes} />}
 
-      {agrupamento === 'padrao' && <ListaPadrao gastos={gastos} cartoes={cartoes} />}
-      {agrupamento === 'categoria' && <ListaPorCategoria gastos={gastos} cartoes={cartoes} />}
-      {agrupamento === 'cartao' && <ListaPorCartao gastos={gastos} cartoes={cartoes} />}
+      {agrupamento === 'padrao' && <ListaPadrao gastos={gastos} cartoes={cartoes} customCategories={customCategories} />}
+      {agrupamento === 'categoria' && <ListaPorCategoria gastos={gastos} cartoes={cartoes} customCategories={customCategories} />}
+      {agrupamento === 'cartao' && <ListaPorCartao gastos={gastos} cartoes={cartoes} customCategories={customCategories} />}
     </div>
   )
 }
 
-function ListaPadrao({ gastos, cartoes }: { gastos: GastoVariavel[]; cartoes: Cartao[] }) {
+function ListaPadrao({ gastos, cartoes, customCategories }: { gastos: GastoVariavel[]; cartoes: Cartao[]; customCategories: CustomCategory[] }) {
   return (
     <div className="bg-white rounded-2xl border border-[#ece4db] px-4">
       {gastos.length === 0 ? (
         <EmptyState text="Nenhum gasto variável cadastrado ainda." />
       ) : (
-        gastos.map(item => <VariavelRow key={item.id} item={item} cartoes={cartoes} />)
+        gastos.map(item => <VariavelRow key={item.id} item={item} cartoes={cartoes} customCategories={customCategories} />)
       )}
     </div>
   )
 }
 
-function ListaPorCategoria({ gastos, cartoes }: { gastos: GastoVariavel[]; cartoes: Cartao[] }) {
+function ListaPorCategoria({ gastos, cartoes, customCategories }: { gastos: GastoVariavel[]; cartoes: Cartao[]; customCategories: CustomCategory[] }) {
   const grupos = useMemo(() => {
     const map = new Map<string, GastoVariavel[]>()
     for (const g of gastos) {
@@ -192,7 +193,7 @@ function ListaPorCategoria({ gastos, cartoes }: { gastos: GastoVariavel[]; carto
               <span className="text-[13px] text-[#6b7280]">{formatCurrency(subtotal)}</span>
             </div>
             <div className="bg-white rounded-2xl border border-[#ece4db] px-4">
-              {items.map(item => <VariavelRow key={item.id} item={item} cartoes={cartoes} />)}
+              {items.map(item => <VariavelRow key={item.id} item={item} cartoes={cartoes} customCategories={customCategories} />)}
             </div>
           </div>
         )
@@ -201,7 +202,7 @@ function ListaPorCategoria({ gastos, cartoes }: { gastos: GastoVariavel[]; carto
   )
 }
 
-function ListaPorCartao({ gastos, cartoes }: { gastos: GastoVariavel[]; cartoes: Cartao[] }) {
+function ListaPorCartao({ gastos, cartoes, customCategories }: { gastos: GastoVariavel[]; cartoes: Cartao[]; customCategories: CustomCategory[] }) {
   const grupos = useMemo(() => {
     const map = new Map<string, { cartao: Cartao | null; items: GastoVariavel[] }>()
     for (const g of gastos) {
@@ -237,7 +238,7 @@ function ListaPorCartao({ gastos, cartoes }: { gastos: GastoVariavel[]; cartoes:
               <span className="text-[13px] text-[#6b7280]">Subtotal: {formatCurrency(subtotal)}</span>
             </div>
             <div className="bg-white rounded-2xl border border-[#ece4db] px-4">
-              {items.map(item => <VariavelRow key={item.id} item={item} cartoes={cartoes} />)}
+              {items.map(item => <VariavelRow key={item.id} item={item} cartoes={cartoes} customCategories={customCategories} />)}
             </div>
           </div>
         )
@@ -246,7 +247,7 @@ function ListaPorCartao({ gastos, cartoes }: { gastos: GastoVariavel[]; cartoes:
   )
 }
 
-function VariavelRow({ item, cartoes }: { item: GastoVariavel; cartoes: Cartao[] }) {
+function VariavelRow({ item, cartoes, customCategories }: { item: GastoVariavel; cartoes: Cartao[]; customCategories: CustomCategory[] }) {
   const formaPagamentoLabel = item.forma_pagamento === 'dinheiro' ? '💵 Dinheiro' : item.forma_pagamento === 'debito' ? '💳 Débito' : '💳 Crédito'
   const parcela = item.parcelado && item.total_parcelas
     ? item.valor_parcela ?? item.valor / item.total_parcelas
@@ -270,7 +271,7 @@ function VariavelRow({ item, cartoes }: { item: GastoVariavel; cartoes: Cartao[]
       isPaid={item.is_paid}
       onTogglePaid={paid => alternarPagoGastoVariavel(item.id, paid)}
       destaque={destaque}
-      editButton={<FormGastoVariavel item={item} cartoes={cartoes} onSuccess={() => {}} />}
+      editButton={<FormGastoVariavel item={item} cartoes={cartoes} customCategories={customCategories} onSuccess={() => {}} />}
       deleteButton={<ModalDelete label={item.nome} onConfirm={() => deletarGastoVariavel(item.id)} />}
     />
   )
