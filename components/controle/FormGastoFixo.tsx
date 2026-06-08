@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Pencil, Plus } from 'lucide-react'
 import type { GastoFixo, Cartao } from '@/types'
 import { criarGastoFixo, editarGastoFixo } from '@/app/(auth)/controle/actions'
+import { CurrencyInput } from '@/components/ui/CurrencyInput'
 
 interface FormGastoFixoProps {
   item?: GastoFixo
@@ -22,7 +23,7 @@ export function FormGastoFixo({ item, cartoes, onSuccess }: FormGastoFixoProps) 
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [nome, setNome] = useState(item?.nome ?? '')
-  const [valor, setValor] = useState(item ? String(item.valor) : '')
+  const [valor, setValor] = useState<number | null>(item ? item.valor : null)
   const [categoria, setCategoria] = useState(item?.categoria ?? CATEGORIAS[0])
   const [vencimento, setVencimento] = useState(item?.vencimento ? String(item.vencimento) : '')
   const [recorrente, setRecorrente] = useState(item?.recorrente ?? true)
@@ -31,15 +32,15 @@ export function FormGastoFixo({ item, cartoes, onSuccess }: FormGastoFixoProps) 
 
   function resetForm() {
     if (!item) {
-      setNome(''); setValor(''); setCategoria(CATEGORIAS[0])
+      setNome(''); setValor(null); setCategoria(CATEGORIAS[0])
       setVencimento(''); setRecorrente(true); setDuracaoMeses(''); setCartaoId('')
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const valorNum = parseFloat(valor.replace(',', '.'))
-    if (isNaN(valorNum) || valorNum <= 0) { toast.error('Valor inválido'); return }
+    const valorNum = valor ?? 0
+    if (valorNum <= 0) { toast.error('Valor inválido'); return }
 
     setLoading(true)
     const data = {
@@ -85,9 +86,8 @@ export function FormGastoFixo({ item, cartoes, onSuccess }: FormGastoFixoProps) 
                   placeholder="Ex: Aluguel, Academia..." className={inputCls} />
               </Field>
 
-              <Field label="Valor (R$)">
-                <input value={valor} onChange={e => setValor(e.target.value)} required
-                  placeholder="0,00" inputMode="decimal" className={inputCls} />
+              <Field label="Valor">
+                <CurrencyInput value={valor} onValueChange={setValor} required />
               </Field>
 
               <Field label="Categoria">

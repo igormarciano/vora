@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Pencil, Plus } from 'lucide-react'
 import type { Investimento } from '@/types'
 import { criarInvestimento, editarInvestimento } from '@/app/(auth)/investimentos/actions'
+import { CurrencyInput } from '@/components/ui/CurrencyInput'
 
 interface FormInvestimentoProps {
   item?: Investimento
@@ -27,7 +28,7 @@ export function FormInvestimento({ item, onSuccess }: FormInvestimentoProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [nome, setNome] = useState(item?.nome ?? '')
-  const [valor, setValor] = useState(item ? String(item.valor) : '')
+  const [valor, setValor] = useState<number | null>(item ? item.valor : null)
   const [categoria, setCategoria] = useState<CategoriaValue>(item?.categoria ?? 'renda_fixa')
   const [rentabilidade, setRentabilidade] = useState(item?.rentabilidade_anual ? String(item.rentabilidade_anual) : '')
   const [vencimento, setVencimento] = useState(item?.vencimento ?? '')
@@ -37,7 +38,7 @@ export function FormInvestimento({ item, onSuccess }: FormInvestimentoProps) {
 
   function resetForm() {
     if (!item) {
-      setNome(''); setValor(''); setCategoria('renda_fixa')
+      setNome(''); setValor(null); setCategoria('renda_fixa')
       setRentabilidade(''); setVencimento(''); setLiquidez(''); setObservacao('')
       setDataAporte(new Date().toISOString().slice(0, 10))
     }
@@ -45,8 +46,8 @@ export function FormInvestimento({ item, onSuccess }: FormInvestimentoProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const valorNum = parseFloat(valor.replace(',', '.'))
-    if (isNaN(valorNum) || valorNum <= 0) { toast.error('Valor inválido'); return }
+    const valorNum = valor ?? 0
+    if (valorNum <= 0) { toast.error('Valor inválido'); return }
 
     setLoading(true)
     const data = {
@@ -93,9 +94,8 @@ export function FormInvestimento({ item, onSuccess }: FormInvestimentoProps) {
                   placeholder="Ex: Tesouro Selic, IVVB11..." className={inputCls} />
               </Field>
 
-              <Field label="Valor aportado (R$)">
-                <input value={valor} onChange={e => setValor(e.target.value)} required
-                  placeholder="0,00" inputMode="decimal" className={inputCls} />
+              <Field label="Valor aportado">
+                <CurrencyInput value={valor} onValueChange={setValor} required />
               </Field>
 
               <Field label="Categoria">

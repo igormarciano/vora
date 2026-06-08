@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Pencil, Plus } from 'lucide-react'
 import type { Receita } from '@/types'
 import { criarReceita, editarReceita } from '@/app/(auth)/controle/actions'
+import { CurrencyInput } from '@/components/ui/CurrencyInput'
 
 interface FormReceitaProps {
   item?: Receita
@@ -21,7 +22,7 @@ export function FormReceita({ item, onSuccess }: FormReceitaProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [nome, setNome] = useState(item?.nome ?? '')
-  const [valor, setValor] = useState(item ? String(item.valor) : '')
+  const [valor, setValor] = useState<number | null>(item ? item.valor : null)
   const [tipo, setTipo] = useState<'salario' | 'renda_extra' | 'outros'>(item?.tipo ?? 'salario')
   const [tipoCustom, setTipoCustom] = useState(item?.tipo_custom ?? '')
   const [recorrente, setRecorrente] = useState(item?.recorrente ?? true)
@@ -29,15 +30,15 @@ export function FormReceita({ item, onSuccess }: FormReceitaProps) {
 
   function resetForm() {
     if (!item) {
-      setNome(''); setValor(''); setTipo('salario')
+      setNome(''); setValor(null); setTipo('salario')
       setTipoCustom(''); setRecorrente(true); setDuracaoMeses('')
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const valorNum = parseFloat(valor.replace(',', '.'))
-    if (isNaN(valorNum) || valorNum <= 0) { toast.error('Valor inválido'); return }
+    const valorNum = valor ?? 0
+    if (valorNum <= 0) { toast.error('Valor inválido'); return }
 
     setLoading(true)
     const data = {
@@ -80,9 +81,8 @@ export function FormReceita({ item, onSuccess }: FormReceitaProps) {
                   placeholder="Ex: Salário, Freela..." className={inputCls} />
               </Field>
 
-              <Field label="Valor (R$)">
-                <input value={valor} onChange={e => setValor(e.target.value)} required
-                  placeholder="0,00" inputMode="decimal" className={inputCls} />
+              <Field label="Valor">
+                <CurrencyInput value={valor} onValueChange={setValor} required />
               </Field>
 
               <Field label="Tipo">

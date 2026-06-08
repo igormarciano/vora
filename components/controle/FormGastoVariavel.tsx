@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Pencil, Plus } from 'lucide-react'
 import type { GastoVariavel, Cartao } from '@/types'
 import { criarGastoVariavel, editarGastoVariavel } from '@/app/(auth)/controle/actions'
+import { CurrencyInput } from '@/components/ui/CurrencyInput'
 
 interface FormGastoVariavelProps {
   item?: GastoVariavel
@@ -22,7 +23,7 @@ export function FormGastoVariavel({ item, cartoes, onSuccess }: FormGastoVariave
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [nome, setNome] = useState(item?.nome ?? '')
-  const [valor, setValor] = useState(item ? String(item.valor) : '')
+  const [valor, setValor] = useState<number | null>(item ? item.valor : null)
   const [categoria, setCategoria] = useState(item?.categoria ?? CATEGORIAS[0])
   const [formaPagamento, setFormaPagamento] = useState<'dinheiro' | 'debito' | 'credito'>(
     item?.forma_pagamento ?? 'dinheiro'
@@ -33,15 +34,15 @@ export function FormGastoVariavel({ item, cartoes, onSuccess }: FormGastoVariave
 
   function resetForm() {
     if (!item) {
-      setNome(''); setValor(''); setCategoria(CATEGORIAS[0])
+      setNome(''); setValor(null); setCategoria(CATEGORIAS[0])
       setFormaPagamento('dinheiro'); setCartaoId(''); setParcelado(false); setTotalParcelas('')
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const valorNum = parseFloat(valor.replace(',', '.'))
-    if (isNaN(valorNum) || valorNum <= 0) { toast.error('Valor inválido'); return }
+    const valorNum = valor ?? 0
+    if (valorNum <= 0) { toast.error('Valor inválido'); return }
 
     const totalParcelasNum = parcelado ? parseInt(totalParcelas) : undefined
     if (parcelado && (!totalParcelasNum || totalParcelasNum < 2)) {
@@ -66,8 +67,8 @@ export function FormGastoVariavel({ item, cartoes, onSuccess }: FormGastoVariave
     onSuccess?.()
   }
 
-  const valorParcela = parcelado && totalParcelas && parseFloat(valor.replace(',', '.')) > 0
-    ? (parseFloat(valor.replace(',', '.')) / parseInt(totalParcelas)).toFixed(2)
+  const valorParcela = parcelado && totalParcelas && valor && valor > 0
+    ? (valor / parseInt(totalParcelas)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : null
 
   return (
@@ -96,9 +97,8 @@ export function FormGastoVariavel({ item, cartoes, onSuccess }: FormGastoVariave
                   placeholder="Ex: Mercado, Uber..." className={inputCls} />
               </Field>
 
-              <Field label="Valor total (R$)">
-                <input value={valor} onChange={e => setValor(e.target.value)} required
-                  placeholder="0,00" inputMode="decimal" className={inputCls} />
+              <Field label="Valor total">
+                <CurrencyInput value={valor} onValueChange={setValor} required />
               </Field>
 
               <Field label="Categoria">

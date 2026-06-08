@@ -124,6 +124,13 @@ middleware.ts    → proteção de rotas + refresh de sessão
 
 ---
 
+## Migrations aplicadas no Supabase
+
+- `add_setup_completo_to_profiles`: `ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS setup_completo boolean NOT NULL DEFAULT false;`
+- `fix_handle_new_user_copy_nome`: corrige a trigger `handle_new_user` para copiar `raw_user_meta_data->>'nome'` (definido no signup) para `profiles.nome`. Antes, a trigger só inserida o `id`, deixando `profiles.nome` sempre `NULL` e quebrando a exibição do nome em Configurações.
+
+---
+
 ## O que NÃO construir neste MVP
 
 - Integração com Open Finance / bancos
