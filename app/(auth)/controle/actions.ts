@@ -74,6 +74,9 @@ export async function criarGastoFixo(data: {
   recorrente: boolean
   duracao_meses?: number
   vinculado_cartao_id?: string
+  person_type?: 'PF' | 'PJ'
+  description?: string
+  is_paid?: boolean
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -100,12 +103,28 @@ export async function editarGastoFixo(id: string, data: {
   recorrente: boolean
   duracao_meses?: number
   vinculado_cartao_id?: string
+  person_type?: 'PF' | 'PJ'
+  description?: string
+  is_paid?: boolean
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
   const { error } = await supabase.from('gastos_fixos').update(data).eq('id', id).eq('user_id', user.id)
+  if (error) return { error: error.message }
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
+  revalidatePath('/dashboard')
+  return {}
+}
+
+export async function alternarPagoGastoFixo(id: string, is_paid: boolean) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const { error } = await supabase.from('gastos_fixos').update({ is_paid }).eq('id', id).eq('user_id', user.id)
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
@@ -137,6 +156,8 @@ export async function criarGastoVariavel(data: {
   parcelado: boolean
   total_parcelas?: number
   valor_parcela?: number
+  description?: string
+  is_paid?: boolean
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -164,12 +185,27 @@ export async function editarGastoVariavel(id: string, data: {
   parcelado: boolean
   total_parcelas?: number
   valor_parcela?: number
+  description?: string
+  is_paid?: boolean
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
   const { error } = await supabase.from('gastos_variaveis').update(data).eq('id', id).eq('user_id', user.id)
+  if (error) return { error: error.message }
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
+  revalidatePath('/dashboard')
+  return {}
+}
+
+export async function alternarPagoGastoVariavel(id: string, is_paid: boolean) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const { error } = await supabase.from('gastos_variaveis').update({ is_paid }).eq('id', id).eq('user_id', user.id)
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
@@ -192,12 +228,24 @@ export async function deletarGastoVariavel(id: string) {
 
 // ── Cartões ───────────────────────────────────────────────────────────────────
 
-export async function criarCartao(data: { nome: string; bandeira?: string; limite?: number }) {
+export async function criarCartao(data: { nome: string; bandeira?: string; limite?: number; color?: string }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
   const { error } = await supabase.from('cartoes').insert({ ...data, user_id: user.id })
+  if (error) return { error: error.message }
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
+  return {}
+}
+
+export async function editarCorCartao(id: string, color: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const { error } = await supabase.from('cartoes').update({ color }).eq('id', id).eq('user_id', user.id)
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
@@ -213,5 +261,33 @@ export async function deletarCartao(id: string) {
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  return {}
+}
+
+// ── Categorias personalizadas ─────────────────────────────────────────────────
+
+export async function criarCategoriaPersonalizada(data: { emoji: string; nome: string; contexto: 'fixo' | 'variavel' | 'ambos' }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const { error } = await supabase.from('custom_categories').insert({ ...data, user_id: user.id })
+  if (error) return { error: error.message }
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
+  revalidatePath('/configuracoes')
+  return {}
+}
+
+export async function deletarCategoriaPersonalizada(id: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const { error } = await supabase.from('custom_categories').delete().eq('id', id).eq('user_id', user.id)
+  if (error) return { error: error.message }
+  revalidatePath('/receitas')
+  revalidatePath('/gastos')
+  revalidatePath('/configuracoes')
   return {}
 }

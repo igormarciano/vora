@@ -128,6 +128,12 @@ middleware.ts    → proteção de rotas + refresh de sessão
 
 - `add_setup_completo_to_profiles`: `ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS setup_completo boolean NOT NULL DEFAULT false;`
 - `fix_handle_new_user_copy_nome`: corrige a trigger `handle_new_user` para copiar `raw_user_meta_data->>'nome'` (definido no signup) para `profiles.nome`. Antes, a trigger só inserida o `id`, deixando `profiles.nome` sempre `NULL` e quebrando a exibição do nome em Configurações.
+- `add_grupo3_columns_and_custom_categories`: adiciona colunas usadas pelo Grupo 3 de melhorias —
+  - `gastos_fixos.person_type` (text, `'PF'` ou `'PJ'`, default `'PF'`) — segmentação Pessoa Física/Jurídica (item 3.2)
+  - `gastos_fixos.description` e `gastos_variaveis.description` (text, máx. 500 caracteres) — descrição opcional do gasto (item 3.6)
+  - `gastos_fixos.is_paid` e `gastos_variaveis.is_paid` (boolean, default `false`) — status Pago/Pendente (item 3.7)
+  - `cartoes.color` (text, hex) — cor do cartão escolhida na paleta predefinida (item 3.9)
+  - tabela `custom_categories` (id, user_id, emoji, nome, contexto `'fixo'|'variavel'|'ambos'`, created_at) com RLS por `user_id` — categorias personalizadas (item 3.4)
 
 ---
 

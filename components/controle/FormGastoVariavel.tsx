@@ -20,7 +20,7 @@ interface FormGastoVariavelProps {
 const CATEGORIAS = [
   '🛒 Mercado', '🚌 Transporte', '💊 Farmácia', '👗 Roupas',
   '🍕 Restaurante', '🎭 Lazer', '💄 Beleza', '🐾 Pets',
-  '📦 Compras online', '⛽ Combustível', '🔧 Outros',
+  '📦 Compras online', '⛽ Combustível', '💼 Trabalho', '🔧 Outros',
 ]
 
 export function FormGastoVariavel({ item, cartoes, onSuccess, hideTrigger, open: openProp, onOpenChange }: FormGastoVariavelProps) {
@@ -37,11 +37,14 @@ export function FormGastoVariavel({ item, cartoes, onSuccess, hideTrigger, open:
   const [cartaoId, setCartaoId] = useState(item?.cartao_id ?? '')
   const [parcelado, setParcelado] = useState(item?.parcelado ?? false)
   const [totalParcelas, setTotalParcelas] = useState(item?.total_parcelas ? String(item.total_parcelas) : '')
+  const [description, setDescription] = useState(item?.description ?? '')
+  const [isPaid, setIsPaid] = useState(item?.is_paid ?? false)
 
   function resetForm() {
     if (!item) {
       setNome(''); setValor(null); setCategoria(CATEGORIAS[0])
       setFormaPagamento('dinheiro'); setCartaoId(''); setParcelado(false); setTotalParcelas('')
+      setDescription(''); setIsPaid(false)
     }
   }
 
@@ -49,6 +52,7 @@ export function FormGastoVariavel({ item, cartoes, onSuccess, hideTrigger, open:
     e.preventDefault()
     const valorNum = valor ?? 0
     if (valorNum <= 0) { toast.error('Valor inválido'); return }
+    if (description.length > 500) { toast.error('Descrição muito longa (máx. 500 caracteres)'); return }
 
     const totalParcelasNum = parcelado ? parseInt(totalParcelas) : undefined
     if (parcelado && (!totalParcelasNum || totalParcelasNum < 2)) {
@@ -62,6 +66,8 @@ export function FormGastoVariavel({ item, cartoes, onSuccess, hideTrigger, open:
       parcelado,
       total_parcelas: totalParcelasNum,
       valor_parcela: parcelado && totalParcelasNum ? valorNum / totalParcelasNum : undefined,
+      description: description.trim() || undefined,
+      is_paid: isPaid,
     }
     const result = item ? await editarGastoVariavel(item.id, data) : await criarGastoVariavel(data)
     setLoading(false)
@@ -115,6 +121,13 @@ export function FormGastoVariavel({ item, cartoes, onSuccess, hideTrigger, open:
                 </select>
               </Field>
 
+              <Field label="Descrição (opcional)">
+                <textarea value={description} onChange={e => setDescription(e.target.value)}
+                  placeholder="Algum detalhe a mais sobre esse gasto..." maxLength={500} rows={2}
+                  className={`${inputCls} resize-none`} />
+                <p className="text-[11px] text-[#9ca3af] text-right mt-0.5">{description.length}/500</p>
+              </Field>
+
               <Field label="Forma de pagamento">
                 <div className="flex gap-2">
                   {(['dinheiro', 'debito', 'credito'] as const).map(fp => (
@@ -162,6 +175,14 @@ export function FormGastoVariavel({ item, cartoes, onSuccess, hideTrigger, open:
                   )}
                 </Field>
               )}
+
+              <div className="flex items-center gap-3">
+                <input type="checkbox" id="variavel-pago" checked={isPaid}
+                  onChange={e => setIsPaid(e.target.checked)} className="w-4 h-4 accent-[#8faf8f]" />
+                <label htmlFor="variavel-pago" className="text-[14px] text-[#3c4a3c]">
+                  Já paguei esse gasto
+                </label>
+              </div>
 
               <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={() => setOpen(false)}

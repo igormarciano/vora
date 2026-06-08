@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Pencil, Plus } from 'lucide-react'
-import type { GastoFixo, Cartao } from '@/types'
+import type { GastoFixo, Cartao, PersonType } from '@/types'
 import { criarGastoFixo, editarGastoFixo } from '@/app/(auth)/controle/actions'
 import { CurrencyInput } from '@/components/ui/CurrencyInput'
 
@@ -17,10 +17,16 @@ interface FormGastoFixoProps {
   onOpenChange?: (open: boolean) => void
 }
 
-const CATEGORIAS = [
+const CATEGORIAS_PF = [
   '🏠 Moradia', '🍽️ Alimentação', '🚗 Transporte', '💊 Saúde',
   '📚 Educação', '📺 Streaming', '📡 Internet/Telefone', '⚡ Energia/Água',
-  '💳 Financiamento', '🔧 Manutenção', '🐾 Pets', '🔖 Outros',
+  '💳 Financiamento', '🔧 Manutenção', '🐾 Pets', '💼 Trabalho', '🔖 Outros',
+]
+
+const CATEGORIAS_PJ = [
+  '🏢 Escritório/Aluguel', '💼 Trabalho', '👥 Folha de pagamento', '📑 Impostos e taxas',
+  '📡 Internet/Telefone', '⚡ Energia/Água', '📦 Fornecedores', '🔧 Serviços contratados',
+  '📣 Marketing', '🔖 Outros',
 ]
 
 export function FormGastoFixo({ item, cartoes, onSuccess, hideTrigger, open: openProp, onOpenChange }: FormGastoFixoProps) {
@@ -30,16 +36,27 @@ export function FormGastoFixo({ item, cartoes, onSuccess, hideTrigger, open: ope
   const [loading, setLoading] = useState(false)
   const [nome, setNome] = useState(item?.nome ?? '')
   const [valor, setValor] = useState<number | null>(item ? item.valor : null)
-  const [categoria, setCategoria] = useState(item?.categoria ?? CATEGORIAS[0])
+  const [personType, setPersonType] = useState<PersonType>(item?.person_type ?? 'PF')
+  const categorias = personType === 'PF' ? CATEGORIAS_PF : CATEGORIAS_PJ
+  const [categoria, setCategoria] = useState(item?.categoria ?? categorias[0])
   const [vencimento, setVencimento] = useState(item?.vencimento ? String(item.vencimento) : '')
   const [recorrente, setRecorrente] = useState(item?.recorrente ?? true)
   const [duracaoMeses, setDuracaoMeses] = useState(item?.duracao_meses ? String(item.duracao_meses) : '')
   const [cartaoId, setCartaoId] = useState(item?.vinculado_cartao_id ?? '')
+  const [description, setDescription] = useState(item?.description ?? '')
+  const [isPaid, setIsPaid] = useState(item?.is_paid ?? false)
+
+  function handlePersonTypeChange(novo: PersonType) {
+    setPersonType(novo)
+    const novasCategorias = novo === 'PF' ? CATEGORIAS_PF : CATEGORIAS_PJ
+    if (!novasCategorias.includes(categoria)) setCategoria(novasCategorias[0])
+  }
 
   function resetForm() {
     if (!item) {
-      setNome(''); setValor(null); setCategoria(CATEGORIAS[0])
+      setNome(''); setValor(null); setPersonType('PF'); setCategoria(CATEGORIAS_PF[0])
       setVencimento(''); setRecorrente(true); setDuracaoMeses(''); setCartaoId('')
+      setDescription(''); setIsPaid(false)
     }
   }
 
@@ -47,6 +64,7 @@ export function FormGastoFixo({ item, cartoes, onSuccess, hideTrigger, open: ope
     e.preventDefault()
     const valorNum = valor ?? 0
     if (valorNum <= 0) { toast.error('Valor inválido'); return }
+    if (description.length > 500) { toast.error('Descrição muito longa (máx. 500 caracteres)'); return }
 
     setLoading(true)
     const data = {
@@ -55,6 +73,9 @@ export function FormGastoFixo({ item, cartoes, onSuccess, hideTrigger, open: ope
       recorrente,
       duracao_meses: duracaoMeses ? parseInt(duracaoMeses) : undefined,
       vinculado_cartao_id: cartaoId || undefined,
+      person_type: personType,
+      description: description.trim() || undefined,
+      is_paid: isPaid,
     }
     const result = item ? await editarGastoFixo(item.id, data) : await criarGastoFixo(data)
     setLoading(false)
@@ -98,10 +119,35 @@ export function FormGastoFixo({ item, cartoes, onSuccess, hideTrigger, open: ope
                 <CurrencyInput value={valor} onValueChange={setValor} required />
               </Field>
 
+              <Field label="Esse gasto é pessoal ou da empresa?">
+                <div className="flex gap-2">
+                  {(['PF', 'PJ'] as const).map(pt => (
+                    <button key={pt} type="button"
+                      onClick={() => handlePersonTypeChange(pt)}
+                      className="flex-1 py-2 text-[13px] rounded-lg border transition-colors"
+                      style={{
+                        backgroundColor: personType === pt ? '#dce6dc' : 'white',
+                        borderColor: personType === pt ? '#8faf8f' : '#ece4db',
+                        color: personType === pt ? '#3c4a3c' : '#6b7280',
+                      }}
+                    >
+                      {pt === 'PF' ? 'Pessoa física' : 'Pessoa jurídica'}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+
               <Field label="Categoria">
                 <select value={categoria} onChange={e => setCategoria(e.target.value)} className={inputCls}>
-                  {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
+                  {categorias.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
+              </Field>
+
+              <Field label="Descrição (opcional)">
+                <textarea value={description} onChange={e => setDescription(e.target.value)}
+                  placeholder="Algum detalhe a mais sobre esse gasto..." maxLength={500} rows={2}
+                  className={`${inputCls} resize-none`} />
+                <p className="text-[11px] text-[#9ca3af] text-right mt-0.5">{description.length}/500</p>
               </Field>
 
               <Field label="Vencimento (dia do mês, opcional)">
@@ -132,6 +178,14 @@ export function FormGastoFixo({ item, cartoes, onSuccess, hideTrigger, open: ope
                     placeholder="Ex: 12" inputMode="numeric" className={inputCls} />
                 </Field>
               )}
+
+              <div className="flex items-center gap-3">
+                <input type="checkbox" id="fixo-pago" checked={isPaid}
+                  onChange={e => setIsPaid(e.target.checked)} className="w-4 h-4 accent-[#8faf8f]" />
+                <label htmlFor="fixo-pago" className="text-[14px] text-[#3c4a3c]">
+                  Já paguei esse mês
+                </label>
+              </div>
 
               <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={() => setOpen(false)}

@@ -4,11 +4,15 @@ import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { CreditCard, Plus, ChevronDown } from 'lucide-react'
 import type { GastoFixo, GastoVariavel, Cartao } from '@/types'
-import { deletarGastoFixo, deletarGastoVariavel, criarCartao, deletarCartao } from '@/app/(auth)/controle/actions'
+import {
+  deletarGastoFixo, deletarGastoVariavel, criarCartao, deletarCartao,
+  alternarPagoGastoFixo, alternarPagoGastoVariavel,
+} from '@/app/(auth)/controle/actions'
 import { FormGastoFixo } from '@/components/controle/FormGastoFixo'
 import { FormGastoVariavel } from '@/components/controle/FormGastoVariavel'
 import { ModalDelete } from '@/components/controle/ModalDelete'
 import { ModalAdicionarGasto } from './ModalAdicionarGasto'
+import { GastoCard } from './GastoCard'
 import { formatCurrency } from '@/lib/engine'
 
 interface GastosClientProps {
@@ -72,15 +76,18 @@ function FixosSection({ gastos, cartoes, total }: { gastos: GastoFixo[]; cartoes
           <EmptyState text="Nenhum gasto fixo cadastrado ainda." />
         ) : (
           gastos.map(item => (
-            <ItemRow
+            <GastoCard
               key={item.id}
               nome={item.nome}
               valor={formatCurrency(item.valor)}
-              badge={item.categoria}
+              badge={`${item.person_type === 'PJ' ? 'PJ · ' : ''}${item.categoria}`}
               sub={[
                 item.vencimento ? `Vence dia ${item.vencimento}` : null,
                 item.recorrente ? 'Recorrente' : null,
               ].filter(Boolean).join(' · ') || undefined}
+              description={item.description}
+              isPaid={item.is_paid}
+              onTogglePaid={paid => alternarPagoGastoFixo(item.id, paid)}
               editButton={<FormGastoFixo item={item} cartoes={cartoes} onSuccess={() => {}} />}
               deleteButton={<ModalDelete label={item.nome} onConfirm={() => deletarGastoFixo(item.id)} />}
             />
@@ -239,15 +246,29 @@ function ListaPorCartao({ gastos, cartoes }: { gastos: GastoVariavel[]; cartoes:
 }
 
 function VariavelRow({ item, cartoes }: { item: GastoVariavel; cartoes: Cartao[] }) {
+  const formaPagamentoLabel = item.forma_pagamento === 'dinheiro' ? '💵 Dinheiro' : item.forma_pagamento === 'debito' ? '💳 Débito' : '💳 Crédito'
+  const parcela = item.parcelado && item.total_parcelas
+    ? item.valor_parcela ?? item.valor / item.total_parcelas
+    : null
+
+  // Item 3.8: em compras parceladas, a parcela do mês é o valor em destaque;
+  // o total da compra aparece como informação secundária.
+  const destaque = parcela ? (
+    <p className="text-[12px] text-[#9ca3af] -mt-0.5">
+      {item.parcela_atual}/{item.total_parcelas}x · total {formatCurrency(item.valor)}
+    </p>
+  ) : undefined
+
   return (
-    <ItemRow
+    <GastoCard
       nome={item.nome}
-      valor={formatCurrency(item.valor)}
+      valor={parcela ? `${formatCurrency(parcela)}/mês` : formatCurrency(item.valor)}
       badge={item.categoria}
-      sub={[
-        item.forma_pagamento === 'dinheiro' ? '💵 Dinheiro' : item.forma_pagamento === 'debito' ? '💳 Débito' : '💳 Crédito',
-        item.parcelado && item.total_parcelas ? `${item.total_parcelas}x de ${formatCurrency(item.valor_parcela ?? item.valor / item.total_parcelas)}` : null,
-      ].filter(Boolean).join(' · ') || undefined}
+      sub={[formaPagamentoLabel].filter(Boolean).join(' · ') || undefined}
+      description={item.description}
+      isPaid={item.is_paid}
+      onTogglePaid={paid => alternarPagoGastoVariavel(item.id, paid)}
+      destaque={destaque}
       editButton={<FormGastoVariavel item={item} cartoes={cartoes} onSuccess={() => {}} />}
       deleteButton={<ModalDelete label={item.nome} onConfirm={() => deletarGastoVariavel(item.id)} />}
     />
@@ -331,34 +352,6 @@ function TotalBlock({ label, value }: { label: string; value: number }) {
     <div className="bg-[#dce6dc] rounded-2xl px-5 py-4 mb-5 flex items-center justify-between">
       <span className="text-[14px] text-[#4f604f] font-medium">{label}</span>
       <span className="font-fraunces text-[20px] text-[#3c4a3c]">{formatCurrency(value)}</span>
-    </div>
-  )
-}
-
-function ItemRow({ nome, valor, badge, sub, editButton, deleteButton }: {
-  nome: string
-  valor: string
-  badge?: string
-  sub?: string
-  editButton: React.ReactNode
-  deleteButton: React.ReactNode
-}) {
-  return (
-    <div className="flex items-center gap-3 py-3.5 border-b border-[#f2ede7] last:border-0">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[15px] font-medium text-[#3c4a3c] truncate">{nome}</span>
-          {badge && (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f2ede7] text-[#6b7280]">{badge}</span>
-          )}
-        </div>
-        {sub && <p className="text-[12px] text-[#9ca3af] mt-0.5">{sub}</p>}
-      </div>
-      <span className="text-[15px] font-medium text-[#3c4a3c] shrink-0">{valor}</span>
-      <div className="flex items-center gap-0.5 shrink-0">
-        {editButton}
-        {deleteButton}
-      </div>
     </div>
   )
 }

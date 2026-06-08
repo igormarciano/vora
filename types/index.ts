@@ -25,8 +25,11 @@ export interface Cartao {
   nome: string
   bandeira: string | null
   limite: number | null
+  color: string | null
   created_at: string
 }
+
+export type PersonType = 'PF' | 'PJ'
 
 export interface GastoFixo {
   id: string
@@ -39,6 +42,9 @@ export interface GastoFixo {
   recorrente: boolean
   duracao_meses: number | null
   vinculado_cartao_id: string | null
+  person_type: PersonType
+  description: string | null
+  is_paid: boolean
   mes_referencia: string
   created_at: string
 }
@@ -56,7 +62,18 @@ export interface GastoVariavel {
   total_parcelas: number | null
   parcela_atual: number
   valor_parcela: number | null
+  description: string | null
+  is_paid: boolean
   mes_referencia: string
+  created_at: string
+}
+
+export interface CustomCategory {
+  id: string
+  user_id: string
+  emoji: string
+  nome: string
+  contexto: 'fixo' | 'variavel' | 'ambos'
   created_at: string
 }
 
