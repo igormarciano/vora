@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 
 type Mode = 'landing' | 'login' | 'esqueci'
 
@@ -97,13 +98,11 @@ export default function LoginPage() {
                   Esqueci minha senha
                 </button>
               </div>
-              <input
-                type="password"
+              <PasswordInput
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full border border-[#ece4db] bg-white text-[#3c4a3c] px-4 py-3 text-[16px] outline-none focus:border-[#8faf8f] transition-colors"
               />
             </div>
             <button
