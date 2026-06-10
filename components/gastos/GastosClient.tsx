@@ -465,7 +465,7 @@ function VariavelRow({ item, cartoes, customCategories }: { item: GastoVariavel;
     <GastoCard
       nome={item.nome}
       valor={parcela ? `${formatCurrency(parcela)}/mês` : formatCurrency(item.valor)}
-      badge={item.categoria}
+      badge={`${item.expense_nature === 'PJ' ? 'PJ · ' : ''}${item.categoria}`}
       sub={[formaPagamentoLabel].filter(Boolean).join(' · ') || undefined}
       description={item.description}
       isPaid={item.is_paid}

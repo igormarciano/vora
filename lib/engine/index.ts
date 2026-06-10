@@ -88,3 +88,26 @@ export function projetarGastosParcelados(parcelados: GastoVariavel[], mesAlvo: s
   }
   return projetados
 }
+
+/**
+ * Projeta gastos fixos recorrentes para o mês alvo, sem duplicar registros no banco.
+ * Um gasto fixo recorrente (`recorrente = true`) é cadastrado uma única vez, no mês em
+ * que foi criado (`mes_referencia`). A partir daí, ele se repete automaticamente nos
+ * meses seguintes — indefinidamente, ou por `duracao_meses` meses (incluindo o mês de
+ * criação) quando essa duração é definida.
+ *
+ * Use esta função com gastos cujo `mes_referencia` seja ANTERIOR ao mês alvo — o
+ * registro do próprio mês de origem já é retornado pela consulta normal por
+ * `mes_referencia = mesAlvo`, sem precisar de projeção.
+ */
+export function projetarGastosFixosRecorrentes(fixos: GastoFixo[], mesAlvo: string): GastoFixo[] {
+  const projetados: GastoFixo[] = []
+  for (const gasto of fixos) {
+    if (!gasto.recorrente) continue
+    const delta = diferencaEmMeses(gasto.mes_referencia, mesAlvo)
+    if (delta <= 0) continue // mês de origem (ou anterior a ele) já é tratado pela consulta normal
+    if (gasto.duracao_meses != null && delta >= gasto.duracao_meses) continue
+    projetados.push({ ...gasto, mes_referencia: mesAlvo })
+  }
+  return projetados
+}

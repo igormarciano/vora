@@ -158,6 +158,7 @@ export async function criarGastoVariavel(data: {
   valor_parcela?: number
   description?: string
   is_paid?: boolean
+  expense_nature?: 'PF' | 'PJ'
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -187,6 +188,7 @@ export async function editarGastoVariavel(id: string, data: {
   valor_parcela?: number
   description?: string
   is_paid?: boolean
+  expense_nature?: 'PF' | 'PJ'
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

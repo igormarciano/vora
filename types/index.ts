@@ -64,6 +64,7 @@ export interface GastoVariavel {
   valor_parcela: number | null
   description: string | null
   is_paid: boolean
+  expense_nature: PersonType
   mes_referencia: string
   created_at: string
 }

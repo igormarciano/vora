@@ -143,6 +143,35 @@ middleware.ts    → proteção de rotas + refresh de sessão
 > distribuído entre investimentos (ver `app/(auth)/investimentos/actions.ts` —
 > `investirSobra` e `dispensarSobraInvestimento`).
 
+- `add_expense_nature_to_gastos_variaveis` (Change Request 001, item 3): adiciona
+  `gastos_variaveis.expense_nature` (text, `'PF'` ou `'PJ'`, default `'PF'`, com
+  `CHECK`) — segmentação Pessoa Física/Jurídica para gastos variáveis, espelhando
+  `gastos_fixos.person_type`. Apenas segmentação analítica: **não altera nenhum
+  cálculo** (receitas, gastos, economia, status, saldo livre).
+
+---
+
+## Recorrência de gastos fixos (Change Request 001, item 4)
+
+Gastos fixos com `recorrente = true` são cadastrados **uma única vez**, no mês em
+que foram criados (`mes_referencia`). Para que apareçam automaticamente nos meses
+seguintes — sem duplicar registros no banco — foi criada a função
+`projetarGastosFixosRecorrentes(fixos, mesAlvo)` em `lib/engine/index.ts`, que
+projeta esses gastos para qualquer mês posterior ao de origem, respeitando
+`duracao_meses` (quando definido) ou propagando indefinidamente (quando `null`).
+
+Essa projeção é aplicada em todos os pontos que calculam o mês de referência,
+para manter os indicadores consistentes entre telas:
+
+- `app/(auth)/gastos/page.tsx` (lista de Gastos com navegação mensal)
+- `app/(auth)/dashboard/page.tsx` (Visão geral / cards do mês atual)
+- `app/(auth)/investimentos/page.tsx` e `actions.ts` (`investirSobra`, cálculo de sobra)
+
+Editar uma ocorrência projetada edita o gasto fixo de origem (afeta todas as
+ocorrências futuras, como em uma assinatura recorrente real). Excluir uma
+ocorrência projetada exclui o gasto fixo de origem por completo, encerrando a
+recorrência — mesmo comportamento já adotado para compras parceladas (item 3.11).
+
 ---
 
 ## O que NÃO construir neste MVP

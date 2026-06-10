@@ -8,6 +8,7 @@ import {
   calcularTotalGastos,
   calcularEconomia,
   getMesReferencia,
+  projetarGastosFixosRecorrentes,
 } from '@/lib/engine'
 
 export default async function InvestimentosPage() {
@@ -20,20 +21,25 @@ export default async function InvestimentosPage() {
   const [
     { data: investimentos },
     { data: receitas },
-    { data: gastosFixos },
+    { data: fixosDoMes },
+    { data: fixosRecorrentesAnteriores },
     { data: gastosVariaveis },
     { data: pendencia },
   ] = await Promise.all([
     supabase.from('investimentos').select('*').eq('user_id', user.id).order('data_aporte', { ascending: false }),
     supabase.from('receitas').select('*').eq('user_id', user.id).eq('mes_referencia', mes),
     supabase.from('gastos_fixos').select('*').eq('user_id', user.id).eq('mes_referencia', mes),
+    // Gastos fixos recorrentes lançados em meses anteriores, projetados para o mês atual
+    supabase.from('gastos_fixos').select('*').eq('user_id', user.id).eq('recorrente', true).lt('mes_referencia', mes),
     supabase.from('gastos_variaveis').select('*').eq('user_id', user.id).eq('mes_referencia', mes),
     supabase.from('pendencias_investimento').select('*').eq('user_id', user.id).eq('mes_referencia', mes).maybeSingle(),
   ])
 
+  const gastosFixos = [...(fixosDoMes ?? []), ...projetarGastosFixosRecorrentes(fixosRecorrentesAnteriores ?? [], mes)]
+
   const totalReceitas = calcularReceitas(receitas ?? [])
   const totalGastos = calcularTotalGastos(
-    calcularGastosFixos(gastosFixos ?? []),
+    calcularGastosFixos(gastosFixos),
     calcularGastosVariaveis(gastosVariaveis ?? [])
   )
   const sobra = calcularEconomia(totalReceitas, totalGastos)

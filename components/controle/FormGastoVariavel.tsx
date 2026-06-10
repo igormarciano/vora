@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Pencil, Plus } from 'lucide-react'
-import type { GastoVariavel, Cartao, CustomCategory } from '@/types'
+import type { GastoVariavel, Cartao, CustomCategory, PersonType } from '@/types'
 import { criarGastoVariavel, editarGastoVariavel } from '@/app/(auth)/controle/actions'
 import { CurrencyInput } from '@/components/ui/CurrencyInput'
 import { CategorySelect } from '@/components/controle/CategorySelect'
@@ -41,12 +41,13 @@ export function FormGastoVariavel({ item, cartoes, customCategories = [], onSucc
   const [totalParcelas, setTotalParcelas] = useState(item?.total_parcelas ? String(item.total_parcelas) : '')
   const [description, setDescription] = useState(item?.description ?? '')
   const [isPaid, setIsPaid] = useState(item?.is_paid ?? false)
+  const [expenseNature, setExpenseNature] = useState<PersonType>(item?.expense_nature ?? 'PF')
 
   function resetForm() {
     if (!item) {
       setNome(''); setValor(null); setCategoria(CATEGORIAS[0])
       setFormaPagamento('dinheiro'); setCartaoId(''); setParcelado(false); setTotalParcelas('')
-      setDescription(''); setIsPaid(false)
+      setDescription(''); setIsPaid(false); setExpenseNature('PF')
     }
   }
 
@@ -70,6 +71,7 @@ export function FormGastoVariavel({ item, cartoes, customCategories = [], onSucc
       valor_parcela: parcelado && totalParcelasNum ? valorNum / totalParcelasNum : undefined,
       description: description.trim() || undefined,
       is_paid: isPaid,
+      expense_nature: expenseNature,
     }
     const result = item ? await editarGastoVariavel(item.id, data) : await criarGastoVariavel(data)
     setLoading(false)
@@ -115,6 +117,24 @@ export function FormGastoVariavel({ item, cartoes, customCategories = [], onSucc
 
               <Field label="Valor total">
                 <CurrencyInput value={valor} onValueChange={setValor} required />
+              </Field>
+
+              <Field label="Esse gasto é pessoal ou da empresa?">
+                <div className="flex gap-2">
+                  {(['PF', 'PJ'] as const).map(pt => (
+                    <button key={pt} type="button"
+                      onClick={() => setExpenseNature(pt)}
+                      className="flex-1 py-2 text-[13px] rounded-lg border transition-colors"
+                      style={{
+                        backgroundColor: expenseNature === pt ? '#dce6dc' : 'white',
+                        borderColor: expenseNature === pt ? '#8faf8f' : '#ece4db',
+                        color: expenseNature === pt ? '#3c4a3c' : '#6b7280',
+                      }}
+                    >
+                      {pt === 'PF' ? 'Pessoa física' : 'Pessoa jurídica'}
+                    </button>
+                  ))}
+                </div>
               </Field>
 
               <Field label="Categoria">

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { projetarGastosFixosRecorrentes } from '@/lib/engine'
 
 export async function criarInvestimento(data: {
   nome: string
@@ -65,14 +66,18 @@ export async function investirSobra(data: {
   if (!data.nome.trim()) return { error: 'Informe um nome para o investimento' }
   if (data.valor <= 0) return { error: 'Valor inválido' }
 
-  const [{ data: receitas }, { data: gastosFixos }, { data: gastosVariaveis }] = await Promise.all([
+  const [{ data: receitas }, { data: fixosDoMes }, { data: fixosRecorrentesAnteriores }, { data: gastosVariaveis }] = await Promise.all([
     supabase.from('receitas').select('valor').eq('user_id', user.id).eq('mes_referencia', data.mes_referencia),
-    supabase.from('gastos_fixos').select('valor').eq('user_id', user.id).eq('mes_referencia', data.mes_referencia),
+    supabase.from('gastos_fixos').select('*').eq('user_id', user.id).eq('mes_referencia', data.mes_referencia),
+    // Gastos fixos recorrentes lançados em meses anteriores, projetados para o mês de referência
+    supabase.from('gastos_fixos').select('*').eq('user_id', user.id).eq('recorrente', true).lt('mes_referencia', data.mes_referencia),
     supabase.from('gastos_variaveis').select('valor, parcelado, valor_parcela').eq('user_id', user.id).eq('mes_referencia', data.mes_referencia),
   ])
 
+  const gastosFixos = [...(fixosDoMes ?? []), ...projetarGastosFixosRecorrentes(fixosRecorrentesAnteriores ?? [], data.mes_referencia)]
+
   const totalReceitas = (receitas ?? []).reduce((s, r) => s + r.valor, 0)
-  const totalFixos = (gastosFixos ?? []).reduce((s, g) => s + g.valor, 0)
+  const totalFixos = gastosFixos.reduce((s, g) => s + g.valor, 0)
   const totalVariaveis = (gastosVariaveis ?? []).reduce(
     (s, g) => s + (g.parcelado && g.valor_parcela != null ? g.valor_parcela : g.valor), 0
   )
