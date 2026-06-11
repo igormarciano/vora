@@ -174,6 +174,30 @@ recorrência — mesmo comportamento já adotado para compras parceladas (item 3
 
 ---
 
+## Central de Cartões (Change Request 001, item 2)
+
+Nova página dedicada por cartão em `/gastos/cartoes/[id]`
+(`app/(auth)/gastos/cartoes/[id]/page.tsx` + `components/cartoes/CartaoDetalheClient.tsx`),
+acessível a partir de "Gerenciar cartões" (dentro de Gastos → Variáveis), clicando
+no nome do cartão. Mostra:
+
+- Cabeçalho: nome, limite, disponível e valor utilizado do cartão.
+- Indicadores: total da fatura atual, total parcelado futuro e quantidade de compras.
+- Lista completa de compras (`gastos_variaveis` com `cartao_id` igual ao cartão),
+  com descrição, categoria, data, valor total e parcela atual/total — reutilizando
+  a mesma lógica de projeção de `projetarGastosParcelados` para calcular a parcela
+  "atual" de cada compra parcelada sem duplicar registros.
+- Checkboxes por compra (e "selecionar todas") para seleção múltipla — preparação
+  para ações em lote, exportação e filtros futuros (ainda não implementados).
+- Gastos fixos vinculados ao cartão no mês atual (incluindo recorrências projetadas)
+  são listados à parte e somados à fatura atual.
+
+Nenhuma migration nova foi necessária — a página usa apenas colunas já existentes
+(`cartoes.limite`, `cartoes.color`, `gastos_variaveis.cartao_id`,
+`gastos_fixos.vinculado_cartao_id`).
+
+---
+
 ## O que NÃO construir neste MVP
 
 - Integração com Open Finance / bancos

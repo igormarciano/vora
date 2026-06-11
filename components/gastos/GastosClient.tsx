@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { toast } from 'sonner'
 import { CreditCard, Plus, ChevronDown, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
@@ -598,12 +599,12 @@ function CartaoRow({ cartao }: { cartao: Cartao }) {
   return (
     <div className="flex flex-col gap-2 bg-white rounded-lg px-3 py-2 border border-[#ece4db]">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2 text-[14px] text-[#3c4a3c]">
+        <Link href={`/gastos/cartoes/${cartao.id}`} className="flex items-center gap-2 text-[14px] text-[#3c4a3c] hover:text-[#4f604f] transition-colors min-w-0">
           <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
-          <CreditCard size={15} className="text-[#6b7280]" />
-          {cartao.nome}
-        </span>
-        <div className="flex items-center gap-1">
+          <CreditCard size={15} className="text-[#6b7280] shrink-0" />
+          <span className="truncate">{cartao.nome}</span>
+        </Link>
+        <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={() => setEditingColor(v => !v)}
             disabled={saving}
