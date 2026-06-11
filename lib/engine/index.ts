@@ -1,4 +1,4 @@
-import type { Receita, GastoFixo, GastoVariavel, StatusMes } from '@/types'
+import type { Receita, GastoFixo, GastoVariavel, StatusMes, ProjecaoMensal } from '@/types'
 
 export function calcularReceitas(receitas: Receita[]): number {
   return receitas.reduce((sum, r) => sum + r.valor, 0)
@@ -70,6 +70,13 @@ export function formatarMesReferencia(mesReferencia: string): string {
   return label.charAt(0).toUpperCase() + label.slice(1)
 }
 
+/** Rótulo curto para eixos de gráfico, ex: "jun/26". */
+export function formatarMesAbreviado(mesReferencia: string): string {
+  const [ano, mes] = mesReferencia.split('-').map(Number)
+  const data = new Date(ano, mes - 1, 1)
+  return data.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', '')
+}
+
 /**
  * Projeta gastos variáveis parcelados para o mês alvo, sem duplicar registros no banco.
  * Cada compra parcelada é armazenada uma única vez (no mês da primeira parcela); aqui
@@ -110,4 +117,67 @@ export function projetarGastosFixosRecorrentes(fixos: GastoFixo[], mesAlvo: stri
     projetados.push({ ...gasto, mes_referencia: mesAlvo })
   }
   return projetados
+}
+
+/**
+ * Projeta receitas recorrentes para o mês alvo, sem duplicar registros no banco.
+ * Mesma lógica de `projetarGastosFixosRecorrentes`, aplicada a `receitas`
+ * (que também possuem `recorrente` + `duracao_meses`).
+ */
+export function projetarReceitasRecorrentes(receitas: Receita[], mesAlvo: string): Receita[] {
+  const projetadas: Receita[] = []
+  for (const receita of receitas) {
+    if (!receita.recorrente) continue
+    const delta = diferencaEmMeses(receita.mes_referencia, mesAlvo)
+    if (delta <= 0) continue
+    if (receita.duracao_meses != null && delta >= receita.duracao_meses) continue
+    projetadas.push({ ...receita, mes_referencia: mesAlvo })
+  }
+  return projetadas
+}
+
+/**
+ * Gera a projeção financeira (receitas, gastos, economia e status) para uma sequência
+ * de meses a partir de `mesInicial` (incluso) — base para o "Gráfico de projeção
+ * futura" (Change Request 001, item 1.4) e para o "Gráfico de capacidade de economia"
+ * (item 1.3). Usa as mesmas funções de projeção de recorrência/parcelamento já
+ * aplicadas em `/gastos`, `/dashboard` e `/investimentos`, sem criar nenhum registro
+ * novo no banco — tudo é calculado em memória a partir dos dados já existentes.
+ */
+export function gerarProjecaoMensal(
+  dados: {
+    receitas: Receita[]
+    gastosFixos: GastoFixo[]
+    /** Apenas compras parceladas (parcelado = true) */
+    gastosVariaveisParcelados: GastoVariavel[]
+    /** Apenas gastos variáveis não parcelados, de qualquer mês já lançado */
+    gastosVariaveisAvulsos: GastoVariavel[]
+  },
+  mesInicial: string,
+  quantidadeMeses: number,
+  metaPercentual: number
+): ProjecaoMensal[] {
+  const { receitas, gastosFixos, gastosVariaveisParcelados, gastosVariaveisAvulsos } = dados
+  const meses: ProjecaoMensal[] = []
+
+  for (let i = 0; i < quantidadeMeses; i++) {
+    const mes = deslocarMesReferencia(mesInicial, i)
+
+    const receitasMes = calcularReceitas(receitas.filter(r => r.mes_referencia === mes))
+      + calcularReceitas(projetarReceitasRecorrentes(receitas, mes))
+
+    const fixosMes = calcularGastosFixos(gastosFixos.filter(g => g.mes_referencia === mes))
+      + calcularGastosFixos(projetarGastosFixosRecorrentes(gastosFixos, mes))
+
+    const variaveisMes = calcularGastosVariaveis(gastosVariaveisAvulsos.filter(g => g.mes_referencia === mes))
+      + calcularGastosVariaveis(projetarGastosParcelados(gastosVariaveisParcelados, mes))
+
+    const totalGastosMes = calcularTotalGastos(fixosMes, variaveisMes)
+    const economiaMes = calcularEconomia(receitasMes, totalGastosMes)
+    const status = receitasMes > 0 ? calcularStatus(economiaMes, calcularMeta(receitasMes, metaPercentual)) : null
+
+    meses.push({ mes, receitas: receitasMes, gastos: totalGastosMes, economia: economiaMes, status })
+  }
+
+  return meses
 }

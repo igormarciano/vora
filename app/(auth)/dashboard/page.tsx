@@ -3,17 +3,19 @@ import { CardReceita } from '@/components/dashboard/CardReceita'
 import { CardGastos } from '@/components/dashboard/CardGastos'
 import { CardEconomia } from '@/components/dashboard/CardEconomia'
 import { CardStatus } from '@/components/dashboard/CardStatus'
+import { DashboardCharts } from '@/components/dashboard/DashboardCharts'
 import {
-  calcularReceitas,
   calcularGastosFixos,
   calcularGastosVariaveis,
-  calcularTotalGastos,
-  calcularEconomia,
   calcularMeta,
-  calcularStatus,
+  calcularSaldoLivre,
   getMesReferencia,
+  gerarProjecaoMensal,
   projetarGastosFixosRecorrentes,
+  projetarGastosParcelados,
 } from '@/lib/engine'
+
+const QUANT_MESES = 6
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -23,28 +25,77 @@ export default async function DashboardPage() {
 
   const mesRef = getMesReferencia()
 
-  const [{ data: receitas }, { data: fixosDoMes }, { data: fixosRecorrentesAnteriores }, { data: gastosVariaveis }, { data: profile }] =
+  // Busca todo o histórico do usuário (sem filtro de mês) para alimentar a
+  // projeção dos próximos meses (Change Request 001, item 1) — os mesmos
+  // helpers de "no duplication" usados em /gastos e /investimentos calculam,
+  // a partir desses dados, o que se repete (recorrências e parcelas) em cada mês.
+  const [{ data: receitasTodas }, { data: gastosFixosTodos }, { data: gastosVariaveisTodos }, { data: investimentosTodos }, { data: profile }] =
     await Promise.all([
-      supabase.from('receitas').select('*').eq('user_id', user.id).eq('mes_referencia', mesRef),
-      supabase.from('gastos_fixos').select('*').eq('user_id', user.id).eq('mes_referencia', mesRef),
-      // Gastos fixos recorrentes lançados em meses anteriores, projetados para o mês atual
-      // (ver lib/engine: projetarGastosFixosRecorrentes) — sem duplicar registros no banco
-      supabase.from('gastos_fixos').select('*').eq('user_id', user.id).eq('recorrente', true).lt('mes_referencia', mesRef),
-      supabase.from('gastos_variaveis').select('*').eq('user_id', user.id).eq('mes_referencia', mesRef),
+      supabase.from('receitas').select('*').eq('user_id', user.id),
+      supabase.from('gastos_fixos').select('*').eq('user_id', user.id),
+      supabase.from('gastos_variaveis').select('*').eq('user_id', user.id),
+      supabase.from('investimentos').select('*').eq('user_id', user.id),
       supabase.from('profiles').select('*').eq('id', user.id).single(),
     ])
 
-  const fixosProjetados = projetarGastosFixosRecorrentes(fixosRecorrentesAnteriores ?? [], mesRef)
-  const gastosFixos = [...(fixosDoMes ?? []), ...fixosProjetados]
+  const receitas = receitasTodas ?? []
+  const gastosFixos = gastosFixosTodos ?? []
+  const gastosVariaveis = gastosVariaveisTodos ?? []
+  const investimentos = investimentosTodos ?? []
 
-  const totalReceitas = calcularReceitas(receitas ?? [])
-  const totalFixos = calcularGastosFixos(gastosFixos)
-  const totalVariaveis = calcularGastosVariaveis(gastosVariaveis ?? [])
-  const totalGastos = calcularTotalGastos(totalFixos, totalVariaveis)
-  const economia = calcularEconomia(totalReceitas, totalGastos)
+  const gastosVariaveisParcelados = gastosVariaveis.filter(g => g.parcelado)
+  const gastosVariaveisAvulsos = gastosVariaveis.filter(g => !g.parcelado)
+
   const metaPercentual = profile?.meta_economia_percentual ?? 30
+
+  // Projeção dos próximos QUANT_MESES (incluindo o mês atual) — base do gráfico
+  // principal "Projeção futura" (1.4) e do gráfico "Capacidade de economia" (1.3).
+  const projecao = gerarProjecaoMensal(
+    { receitas, gastosFixos, gastosVariaveisParcelados, gastosVariaveisAvulsos },
+    mesRef,
+    QUANT_MESES,
+    metaPercentual
+  )
+
+  // Indicadores do mês atual (mantidos idênticos ao cálculo anterior, agora
+  // derivados do mesmo `projecao` usado pelos gráficos — sem regressões).
+  const mesAtualProjetado = projecao[0]
+  const totalReceitas = mesAtualProjetado.receitas
+  const totalGastos = mesAtualProjetado.gastos
+  const economia = mesAtualProjetado.economia
   const meta = calcularMeta(totalReceitas, metaPercentual)
-  const status = totalReceitas > 0 ? calcularStatus(economia, meta) : null
+  const status = mesAtualProjetado.status
+
+  // Composição do mês atual (gastos fixos x variáveis x investido x saldo
+  // livre) — para o gráfico de composição financeira (1.2).
+  const fixosDoMes = gastosFixos.filter(g => g.mes_referencia === mesRef)
+  const fixosProjetadosMes = projetarGastosFixosRecorrentes(gastosFixos, mesRef)
+  const fixosMes = calcularGastosFixos([...fixosDoMes, ...fixosProjetadosMes])
+
+  const variaveisAvulsosDoMes = gastosVariaveisAvulsos.filter(g => g.mes_referencia === mesRef)
+  const parceladosProjetadosMes = projetarGastosParcelados(gastosVariaveisParcelados, mesRef)
+  const variaveisMes = calcularGastosVariaveis([...variaveisAvulsosDoMes, ...parceladosProjetadosMes])
+
+  const investidoMes = investimentos
+    .filter(inv => getMesReferencia(new Date(inv.data_aporte)) === mesRef)
+    .reduce((sum, inv) => sum + inv.valor, 0)
+
+  const saldoLivreMes = calcularSaldoLivre(economia, investidoMes)
+
+  // Evolução patrimonial projetada (1.1): saldo acumulado a partir de agora +
+  // patrimônio já investido (mantido constante, pois aportes futuros não são
+  // previsíveis) = patrimônio total projetado.
+  const patrimonioInvestidoTotal = investimentos.reduce((sum, inv) => sum + inv.valor, 0)
+  let saldoAcumulado = 0
+  const evolucao = projecao.map(p => {
+    saldoAcumulado += p.economia
+    return {
+      mes: p.mes,
+      saldoAcumulado,
+      patrimonioInvestido: patrimonioInvestidoTotal,
+      patrimonioTotal: saldoAcumulado + patrimonioInvestidoTotal,
+    }
+  })
 
   const mesAtual = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 
@@ -87,6 +138,21 @@ export default async function DashboardPage() {
         <CardEconomia economia={economia} meta={meta} />
         <CardStatus status={status} />
       </div>
+
+      {/* Gráficos da Visão Geral (Change Request 001, item 1) — mantêm o foco em
+          projeção futura, sem transformar a tela em painel histórico. */}
+      {totalReceitas > 0 && (
+        <DashboardCharts
+          projecao={projecao}
+          evolucao={evolucao}
+          composicao={{
+            gastosFixos: fixosMes,
+            gastosVariaveis: variaveisMes,
+            investido: investidoMes,
+            saldoLivre: saldoLivreMes,
+          }}
+        />
+      )}
 
       {/* Setup invitation card — aparece enquanto o usuário não preencheu nenhuma receita */}
       {totalReceitas === 0 && (

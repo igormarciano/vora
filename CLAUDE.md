@@ -198,6 +198,48 @@ Nenhuma migration nova foi necessária — a página usa apenas colunas já exis
 
 ---
 
+## Gráficos da Visão Geral (Change Request 001, item 1)
+
+A Visão Geral (`app/(auth)/dashboard/page.tsx`) continua mostrando os 4 cards
+existentes (CardReceita, CardGastos, CardEconomia, CardStatus) com os
+indicadores do mês atual, e ganhou 4 gráficos (componente
+`components/dashboard/DashboardCharts.tsx`), nesta ordem de prioridade — o
+princípio "ver o futuro financeiro antes dele acontecer" continua dominante,
+por isso o gráfico de projeção futura é o primeiro e o maior:
+
+1. **Projeção futura** (`components/dashboard/charts/ProjecaoFuturaChart.tsx`,
+   prioridade 1, gráfico principal): linha com receitas, gastos e economia dos
+   próximos 6 meses (mês atual + 5), gerada por `gerarProjecaoMensal` em
+   `lib/engine/index.ts`.
+2. **Evolução patrimonial**
+   (`components/dashboard/charts/EvolucaoPatrimonialChart.tsx`, prioridade 2):
+   linha com saldo acumulado projetado (soma cumulativa da economia mês a mês,
+   a partir de agora), patrimônio investido (constante = soma de todos os
+   `investimentos.valor` até hoje) e patrimônio total (saldo acumulado +
+   patrimônio investido).
+3. **Capacidade de economia**
+   (`components/dashboard/charts/CapacidadeEconomiaChart.tsx`, prioridade 3):
+   barras com receita, gastos e economia por mês, usando a mesma `projecao` do
+   gráfico principal.
+4. **Composição financeira**
+   (`components/dashboard/charts/ComposicaoFinanceiraChart.tsx`, prioridade 4):
+   donut com a composição do mês atual — gastos fixos, gastos variáveis,
+   investido e saldo livre.
+
+`gerarProjecaoMensal` reaproveita `projetarGastosFixosRecorrentes`,
+`projetarReceitasRecorrentes` e `projetarGastosParcelados` (mesmas funções já
+usadas em `/gastos` e `/investimentos`), calculando tudo em memória a partir
+dos dados existentes — nenhum registro novo é criado no banco e nenhuma
+migration foi necessária. Os 4 cards e o cálculo do mês atual usam o primeiro
+elemento da projeção (`projecao[0]`), garantindo que os indicadores continuem
+idênticos aos calculados antes desta mudança.
+
+Os gráficos só aparecem quando `totalReceitas > 0` (mesma condição que hoje
+esconde o card de configuração inicial), evitando gráficos vazios para quem
+ainda não cadastrou nada.
+
+---
+
 ## O que NÃO construir neste MVP
 
 - Integração com Open Finance / bancos
