@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { ChevronDown, ExternalLink } from 'lucide-react'
 
@@ -29,6 +29,12 @@ export function GastoCard({ nome, valor, badge, sub, description, isPaid, onTogg
   const [paid, setPaid] = useState(isPaid)
   const [pending, startTransition] = useTransition()
   const [expanded, setExpanded] = useState(false)
+
+  // Sincroniza com o status vindo do servidor (ex: ao navegar entre meses, uma
+  // mesma ocorrência projetada pode estar paga em um mês e pendente em outro —
+  // CR003, item 5). Não conflita com a atualização otimista, pois o prop só muda
+  // após o revalidate.
+  useEffect(() => { setPaid(isPaid) }, [isPaid])
 
   function handleToggle() {
     const novo = !paid

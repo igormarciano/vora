@@ -6,8 +6,8 @@ import { formatCurrency, formatarMesAbreviado } from '@/lib/engine'
 
 export interface EvolucaoPatrimonialPonto {
   mes: string
-  saldoAcumulado: number
-  patrimonioInvestido: number
+  patrimonioAtual: number
+  economiasAcumuladas: number
   patrimonioTotal: number
 }
 
@@ -16,16 +16,16 @@ interface EvolucaoPatrimonialChartProps {
 }
 
 /**
- * Gráfico de evolução patrimonial (Change Request 001, item 1.1 — prioridade 2).
- * Mostra a projeção de saldo acumulado, patrimônio investido e patrimônio total
- * ao longo dos próximos meses, a partir das economias e investimentos atuais.
+ * Gráfico de evolução patrimonial (Change Request 001, item 1.1 — prioridade 2;
+ * cálculo revisado no CR003, itens 8 e 9). Mostra a projeção do patrimônio total
+ * mês a mês = patrimônio atual + economias futuras acumuladas + rentabilidade.
  */
 export function EvolucaoPatrimonialChart({ evolucao }: EvolucaoPatrimonialChartProps) {
   const data = evolucao.map(p => ({
     mes: formatarMesAbreviado(p.mes),
-    'Saldo acumulado': p.saldoAcumulado,
-    'Patrimônio investido': p.patrimonioInvestido,
     'Patrimônio total': p.patrimonioTotal,
+    'Patrimônio atual': p.patrimonioAtual,
+    'Economias acumuladas': p.economiasAcumuladas,
   }))
 
   return (
@@ -49,9 +49,9 @@ export function EvolucaoPatrimonialChart({ evolucao }: EvolucaoPatrimonialChartP
           />
           <Tooltip formatter={(value: ValueType | undefined) => formatCurrency(Number(Array.isArray(value) ? value[0] : (value ?? 0)))} contentStyle={{ borderRadius: 12, borderColor: '#ece4db', fontSize: 13 }} />
           <Legend wrapperStyle={{ fontSize: 13 }} />
-          <Line type="monotone" dataKey="Saldo acumulado" stroke="#38a3a5" strokeWidth={2.5} dot={{ r: 3 }} />
-          <Line type="monotone" dataKey="Patrimônio investido" stroke="#8faf8f" strokeWidth={2.5} dot={{ r: 3 }} />
           <Line type="monotone" dataKey="Patrimônio total" stroke="#3c4a3c" strokeWidth={2.5} dot={{ r: 3 }} />
+          <Line type="monotone" dataKey="Patrimônio atual" stroke="#8faf8f" strokeWidth={2} strokeDasharray="4 4" dot={false} />
+          <Line type="monotone" dataKey="Economias acumuladas" stroke="#38a3a5" strokeWidth={2.5} dot={{ r: 3 }} />
         </LineChart>
       </ResponsiveContainer>
     </div>

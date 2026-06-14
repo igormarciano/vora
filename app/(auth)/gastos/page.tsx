@@ -19,6 +19,7 @@ export default async function GastosPage({ searchParams }: { searchParams: Promi
     { data: parcelados },
     { data: cartoes },
     { data: customCategories },
+    { data: statusOcorrencias },
   ] = await Promise.all([
     supabase.from('gastos_fixos').select('*').eq('user_id', user.id).eq('mes_referencia', mes).order('created_at', { ascending: false }),
     // Gastos fixos recorrentes lançados em meses anteriores — projetamos no servidor quais
@@ -32,13 +33,23 @@ export default async function GastosPage({ searchParams }: { searchParams: Promi
     supabase.from('gastos_variaveis').select('*').eq('user_id', user.id).eq('parcelado', true),
     supabase.from('cartoes').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('custom_categories').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+    // Status pago/pendente por competência mensal das ocorrências projetadas (CR003, item 5)
+    supabase.from('ocorrencias_status').select('origem_tipo, origem_id, is_paid').eq('user_id', user.id).eq('mes_referencia', mes),
   ])
 
+  // Mapa de status por competência: aplica-se apenas às ocorrências PROJETADAS;
+  // os registros do próprio mês de origem mantêm o seu is_paid (CR003, item 5).
+  const statusMap = new Map(
+    (statusOcorrencias ?? []).map(s => [`${s.origem_tipo}:${s.origem_id}`, s.is_paid])
+  )
+
   const fixosProjetados = projetarGastosFixosRecorrentes(fixosRecorrentesAnteriores ?? [], mes)
+    .map(g => ({ ...g, is_paid: statusMap.get(`gasto_fixo:${g.id}`) ?? false }))
   const gastosFixos = [...(fixosDoMes ?? []), ...fixosProjetados]
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
 
   const parceladosProjetados = projetarGastosParcelados(parcelados ?? [], mes)
+    .map(g => ({ ...g, is_paid: statusMap.get(`gasto_variavel:${g.id}`) ?? false }))
   const gastosVariaveis = [...(variaveisDoMes ?? []), ...parceladosProjetados]
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
 

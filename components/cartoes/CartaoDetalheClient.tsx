@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CreditCard, Download } from 'lucide-react'
 import type { Cartao, GastoFixo } from '@/types'
-import { formatCurrency } from '@/lib/engine'
+import { formatCurrency, corComOpacidade } from '@/lib/engine'
 import type { CompraCartao } from '@/app/(auth)/gastos/cartoes/[id]/page'
 
 interface CartaoDetalheClientProps {
@@ -52,8 +52,11 @@ export function CartaoDetalheClient({
         <ArrowLeft size={15} /> Voltar para Gastos
       </Link>
 
-      {/* Cabeçalho */}
-      <div className="bg-white rounded-2xl border border-[#ece4db] p-5 mb-5">
+      {/* Cabeçalho — usa a cor do cartão como fundo translúcido (Change Request 003, item 3) */}
+      <div
+        className="rounded-2xl border p-5 mb-5"
+        style={{ backgroundColor: corComOpacidade(cor, 0.12), borderColor: corComOpacidade(cor, 0.28) }}
+      >
         <div className="flex items-center gap-3 mb-4">
           <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: cor }}>
             <CreditCard size={20} className="text-white" />

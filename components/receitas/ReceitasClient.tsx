@@ -17,13 +17,17 @@ export function ReceitasClient({ receitas }: ReceitasClientProps) {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-fraunces text-[32px] text-[#3c4a3c]">Receitas</h1>
-        <FormReceita onSuccess={() => {}} />
       </div>
 
       {/* Total */}
-      <div className="bg-[#dce6dc] rounded-2xl px-5 py-4 mb-5 flex items-center justify-between">
+      <div className="bg-[#dce6dc] rounded-2xl px-5 py-4 mb-4 flex items-center justify-between">
         <span className="text-[14px] text-[#4f604f] font-medium">Total de receitas</span>
         <span className="font-fraunces text-[20px] text-[#3c4a3c]">{formatCurrency(total)}</span>
+      </div>
+
+      {/* CTA primário (Change Request 003, item 4) — acima da listagem, em destaque */}
+      <div className="mb-5">
+        <FormReceita variant="primary" onSuccess={() => {}} />
       </div>
 
       <div className="bg-white rounded-2xl border border-[#ece4db] px-4">

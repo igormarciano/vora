@@ -67,11 +67,12 @@ export function CategorySelect({ value, onChange, categoriasPadrao, customCatego
         </button>
       ) : (
         <div className="flex flex-col gap-2 bg-[#f9f7f4] rounded-lg p-3">
+          {/* Hierarquia [Emoji][Nome] — emoji compacto, nome em destaque (CR003, item 1) */}
           <div className="flex gap-2">
-            <input value={emoji} onChange={e => setEmoji(e.target.value)} placeholder="🎨" maxLength={4}
-              className={inputCls + ' w-16 text-center text-[16px] py-2'} />
-            <input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome da categoria..."
-              className={inputCls + ' flex-1 py-2'} />
+            <input value={emoji} onChange={e => setEmoji(e.target.value)} placeholder="🎨" maxLength={2} aria-label="Emoji"
+              className="w-11 shrink-0 border border-[#ece4db] rounded-lg px-0 py-2 text-center text-[18px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white transition-colors" />
+            <input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome da categoria..." aria-label="Nome"
+              className="flex-1 min-w-0 border border-[#ece4db] rounded-lg px-3 py-2 text-[15px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white transition-colors" />
           </div>
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={() => { setShowForm(false); setEmoji(''); setNome('') }}

@@ -15,6 +15,10 @@ interface ModalAdicionarGastoProps {
   defaultTipo?: TipoGasto
   onSuccess?: () => void
   label?: string
+  /** 'link' = botão de texto sálvia (padrão); 'primary' = CTA gradiente em destaque (Change Request 003, item 4) */
+  variant?: 'link' | 'primary'
+  /** Mês em foco na tela de Gastos — usado para iniciar recorrências sem retroatividade (Change Request 003, item 6) */
+  mesSelecionado?: string
 }
 
 /**
@@ -22,7 +26,7 @@ interface ModalAdicionarGastoProps {
  * Se `defaultTipo` for informado (ex: usuário está na subaba "Fixos"),
  * pula a etapa de seleção e abre direto no formulário correspondente.
  */
-export function ModalAdicionarGasto({ cartoes, customCategories = [], defaultTipo, onSuccess, label = 'Adicionar gasto' }: ModalAdicionarGastoProps) {
+export function ModalAdicionarGasto({ cartoes, customCategories = [], defaultTipo, onSuccess, label = 'Adicionar gasto', variant = 'link', mesSelecionado }: ModalAdicionarGastoProps) {
   const [open, setOpen] = useState(false)
   const [tipo, setTipo] = useState<TipoGasto | null>(defaultTipo ?? null)
 
@@ -42,12 +46,22 @@ export function ModalAdicionarGasto({ cartoes, customCategories = [], defaultTip
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-2 text-[14px] font-medium text-[#8faf8f] hover:text-[#4f604f] transition-colors"
-      >
-        <Plus size={16} /><span>{label}</span>
-      </button>
+      {variant === 'primary' ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-medium text-[15px] text-white transition-opacity hover:opacity-90 shadow-sm"
+          style={{ background: 'linear-gradient(135deg, #57cc99, #38a3a5)' }}
+        >
+          <Plus size={18} /><span>{label}</span>
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2 text-[14px] font-medium text-[#8faf8f] hover:text-[#4f604f] transition-colors"
+        >
+          <Plus size={16} /><span>{label}</span>
+        </button>
+      )}
 
       {/* Etapa de seleção de tipo */}
       {open && tipo === null && (
@@ -87,10 +101,10 @@ export function ModalAdicionarGasto({ cartoes, customCategories = [], defaultTip
 
       {/* Formulário (controlado) — renderizado fora da árvore de seleção para reaproveitar os forms existentes */}
       {open && tipo === 'fixo' && (
-        <FormGastoFixo cartoes={cartoes} customCategories={customCategories} hideTrigger open={open} onOpenChange={setOpen} onSuccess={handleSuccess} />
+        <FormGastoFixo cartoes={cartoes} customCategories={customCategories} mesSelecionado={mesSelecionado} hideTrigger open={open} onOpenChange={setOpen} onSuccess={handleSuccess} />
       )}
       {open && tipo === 'variavel' && (
-        <FormGastoVariavel cartoes={cartoes} customCategories={customCategories} hideTrigger open={open} onOpenChange={setOpen} onSuccess={handleSuccess} />
+        <FormGastoVariavel cartoes={cartoes} customCategories={customCategories} mesSelecionado={mesSelecionado} hideTrigger open={open} onOpenChange={setOpen} onSuccess={handleSuccess} />
       )}
     </>
   )

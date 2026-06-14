@@ -44,8 +44,36 @@ export function formatCurrency(value: number): string {
   }).format(value)
 }
 
+/**
+ * Converte uma cor hexadecimal (#rgb ou #rrggbb) em `rgba()` com a opacidade
+ * informada (0–1). Usado para tingir os cartões com a própria cor de forma
+ * sutil (Change Request 003, item 3), sem perder legibilidade.
+ */
+export function corComOpacidade(hex: string, alpha: number): string {
+  let h = hex.replace('#', '').trim()
+  if (h.length === 3) h = h.split('').map(c => c + c).join('')
+  const num = parseInt(h, 16)
+  if (h.length !== 6 || Number.isNaN(num)) return hex
+  const r = (num >> 16) & 255
+  const g = (num >> 8) & 255
+  const b = num & 255
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 export function getMesReferencia(date = new Date()): string {
   return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0]
+}
+
+/**
+ * Mês de início de uma recorrência: nunca retroativo (Change Request 003, item 6).
+ * Retorna o maior entre o mês selecionado pelo usuário e o mês atual, garantindo
+ * que um lançamento recorrente comece exatamente no mês de criação (ou no mês
+ * futuro selecionado) — nunca em meses anteriores.
+ */
+export function mesReferenciaInicial(mesSelecionado?: string | null): string {
+  const atual = getMesReferencia()
+  if (!mesSelecionado || !/^\d{4}-\d{2}-\d{2}$/.test(mesSelecionado)) return atual
+  return mesSelecionado > atual ? mesSelecionado : atual
 }
 
 /** Soma (ou subtrai) `delta` meses a uma referência 'YYYY-MM-DD' (primeiro dia do mês), retornando outra referência no mesmo formato. */

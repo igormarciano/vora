@@ -17,6 +17,8 @@ interface FormGastoFixoProps {
   hideTrigger?: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  /** Mês em foco na tela de Gastos — recorrência inicia em max(mês, atual) (Change Request 003, item 6) */
+  mesSelecionado?: string
 }
 
 const CATEGORIAS_PF = [
@@ -31,7 +33,7 @@ const CATEGORIAS_PJ = [
   '📣 Marketing', '🔖 Outros',
 ]
 
-export function FormGastoFixo({ item, cartoes, customCategories = [], onSuccess, hideTrigger, open: openProp, onOpenChange }: FormGastoFixoProps) {
+export function FormGastoFixo({ item, cartoes, customCategories = [], onSuccess, hideTrigger, open: openProp, onOpenChange, mesSelecionado }: FormGastoFixoProps) {
   const [internalOpen, setInternalOpen] = useState(false)
   const open = openProp ?? internalOpen
   const setOpen = onOpenChange ?? setInternalOpen
@@ -79,7 +81,9 @@ export function FormGastoFixo({ item, cartoes, customCategories = [], onSuccess,
       description: description.trim() || undefined,
       is_paid: isPaid,
     }
-    const result = item ? await editarGastoFixo(item.id, data) : await criarGastoFixo(data)
+    const result = item
+      ? await editarGastoFixo(item.id, data)
+      : await criarGastoFixo({ ...data, mes_selecionado: mesSelecionado })
     setLoading(false)
 
     if (result.error) { toast.error(result.error); return }

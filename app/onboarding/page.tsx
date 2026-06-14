@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { Compass, Sparkles } from 'lucide-react'
+import { marcarSetupCompleto } from '@/app/setup/actions'
 
 const slides = [
   {
@@ -57,7 +59,11 @@ const slides = [
 
 export default function OnboardingPage() {
   const router = useRouter()
+  // Nova primeira tela (CR003, item 7): o usuário escolhe entre explorar sozinho
+  // ou seguir o fluxo guiado da Vora antes de ver os slides de onboarding.
+  const [mode, setMode] = useState<'escolha' | 'slides'>('escolha')
   const [current, setCurrent] = useState(0)
+  const [loading, setLoading] = useState(false)
   const slide = slides[current]
 
   function handleNext() {
@@ -66,6 +72,17 @@ export default function OnboardingPage() {
     } else {
       router.push('/setup')
     }
+  }
+
+  async function explorarSozinho() {
+    setLoading(true)
+    await marcarSetupCompleto()
+    router.refresh()
+    router.push('/dashboard')
+  }
+
+  if (mode === 'escolha') {
+    return <EscolhaInicial onSozinho={explorarSozinho} onGuiado={() => setMode('slides')} loading={loading} />
   }
 
   return (
@@ -177,6 +194,67 @@ export default function OnboardingPage() {
               Pular
             </button>
           )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Tela de escolha inicial do onboarding (CR003, item 7). Atende dois perfis:
+ * exploradores (configuram tudo manualmente, vão direto para a Home) e usuários
+ * guiados (seguem o fluxo de onboarding + setup assistido da Vora).
+ */
+function EscolhaInicial({
+  onSozinho, onGuiado, loading,
+}: { onSozinho: () => void; onGuiado: () => void; loading: boolean }) {
+  return (
+    <div className="min-h-screen bg-[#f2ede7] flex flex-col px-[30px] py-12">
+      <div className="flex items-center gap-3 mb-12">
+        <Image src="/images/login-logo-icon.svg" alt="" width={24} height={24} />
+        <span className="font-fraunces text-[18px] text-[#3c4a3c]">Vora</span>
+      </div>
+
+      <div className="flex-1 flex flex-col justify-center max-w-md w-full mx-auto">
+        <h1 className="font-fraunces text-[32px] text-[#3c4a3c] leading-tight mb-3">
+          Como você deseja começar?
+        </h1>
+        <p className="text-[16px] text-[#6b7280] leading-relaxed mb-8">
+          Você escolhe o ritmo. Dá pra configurar tudo do seu jeito ou deixar a Vora te guiar passo a passo.
+        </p>
+
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={onGuiado}
+            disabled={loading}
+            className="flex items-start gap-4 p-5 rounded-2xl border border-[#ece4db] bg-white text-left transition-colors hover:border-[#8faf8f] hover:bg-[#fdfcfb] disabled:opacity-60"
+          >
+            <div className="w-11 h-11 rounded-xl bg-[#dce6dc] flex items-center justify-center shrink-0">
+              <Sparkles size={20} className="text-[#3c4a3c]" />
+            </div>
+            <div>
+              <div className="text-[16px] font-medium text-[#3c4a3c] mb-0.5">Começar com ajuda da Vora</div>
+              <div className="text-[14px] text-[#6b7280] leading-relaxed">
+                Quero que a Vora me ajude a configurar minhas finanças.
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={onSozinho}
+            disabled={loading}
+            className="flex items-start gap-4 p-5 rounded-2xl border border-[#ece4db] bg-white text-left transition-colors hover:border-[#8faf8f] hover:bg-[#fdfcfb] disabled:opacity-60"
+          >
+            <div className="w-11 h-11 rounded-xl bg-[#ece4db] flex items-center justify-center shrink-0">
+              <Compass size={20} className="text-[#3c4a3c]" />
+            </div>
+            <div>
+              <div className="text-[16px] font-medium text-[#3c4a3c] mb-0.5">Explorar sozinho</div>
+              <div className="text-[14px] text-[#6b7280] leading-relaxed">
+                Quero configurar tudo manualmente.
+              </div>
+            </div>
+          </button>
         </div>
       </div>
     </div>

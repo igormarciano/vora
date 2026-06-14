@@ -17,6 +17,8 @@ interface FormGastoVariavelProps {
   hideTrigger?: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  /** Mês em foco na tela de Gastos — lançamento nunca retroativo (Change Request 003, item 6) */
+  mesSelecionado?: string
 }
 
 const CATEGORIAS = [
@@ -25,7 +27,7 @@ const CATEGORIAS = [
   '📦 Compras online', '⛽ Combustível', '💼 Trabalho', '🔧 Outros',
 ]
 
-export function FormGastoVariavel({ item, cartoes, customCategories = [], onSuccess, hideTrigger, open: openProp, onOpenChange }: FormGastoVariavelProps) {
+export function FormGastoVariavel({ item, cartoes, customCategories = [], onSuccess, hideTrigger, open: openProp, onOpenChange, mesSelecionado }: FormGastoVariavelProps) {
   const [internalOpen, setInternalOpen] = useState(false)
   const open = openProp ?? internalOpen
   const setOpen = onOpenChange ?? setInternalOpen
@@ -73,7 +75,9 @@ export function FormGastoVariavel({ item, cartoes, customCategories = [], onSucc
       is_paid: isPaid,
       expense_nature: expenseNature,
     }
-    const result = item ? await editarGastoVariavel(item.id, data) : await criarGastoVariavel(data)
+    const result = item
+      ? await editarGastoVariavel(item.id, data)
+      : await criarGastoVariavel({ ...data, mes_selecionado: mesSelecionado })
     setLoading(false)
 
     if (result.error) { toast.error(result.error); return }

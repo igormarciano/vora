@@ -82,18 +82,36 @@ export default async function DashboardPage() {
 
   const saldoLivreMes = calcularSaldoLivre(economia, investidoMes)
 
-  // Evolução patrimonial projetada (1.1): saldo acumulado a partir de agora +
-  // patrimônio já investido (mantido constante, pois aportes futuros não são
-  // previsíveis) = patrimônio total projetado.
-  const patrimonioInvestidoTotal = investimentos.reduce((sum, inv) => sum + inv.valor, 0)
-  let saldoAcumulado = 0
-  const evolucao = projecao.map(p => {
-    saldoAcumulado += p.economia
+  // Evolução patrimonial projetada (CR003, itens 8 e 9):
+  //   Patrimônio Futuro = Patrimônio Atual + Economias Futuras Acumuladas + Rentabilidade Projetada
+  // Composta mês a mês a partir do patrimônio atual (soma dos investimentos),
+  // somando a economia prevista de cada mês e o rendimento dos ativos.
+  const patrimonioAtual = investimentos.reduce((sum, inv) => sum + inv.valor, 0)
+
+  // Taxa de rentabilidade mensal ponderada pelos investimentos que têm rentabilidade definida.
+  const investimentosComRent = investimentos.filter(inv => inv.rentabilidade_anual != null)
+  const baseComRent = investimentosComRent.reduce((sum, inv) => sum + inv.valor, 0)
+  const taxaAnualPonderada = baseComRent > 0
+    ? investimentosComRent.reduce((sum, inv) => sum + inv.valor * (inv.rentabilidade_anual ?? 0), 0) / baseComRent
+    : 0
+  const taxaMensal = taxaAnualPonderada / 100 / 12
+
+  // Economia prevista por mês: usa a economia real calculada do mês; quando não há
+  // dados suficientes (mês sem receita projetada), recorre à meta configurada.
+  const metaValorMensal = totalReceitas * (metaPercentual / 100)
+
+  let patrimonio = patrimonioAtual
+  const evolucao = projecao.map((p, i) => {
+    if (i > 0) {
+      const economiaPrevista = p.receitas > 0 ? p.economia : metaValorMensal
+      const rendimento = patrimonio * taxaMensal
+      patrimonio = patrimonio + economiaPrevista + rendimento
+    }
     return {
       mes: p.mes,
-      saldoAcumulado,
-      patrimonioInvestido: patrimonioInvestidoTotal,
-      patrimonioTotal: saldoAcumulado + patrimonioInvestidoTotal,
+      patrimonioAtual,
+      economiasAcumuladas: patrimonio - patrimonioAtual,
+      patrimonioTotal: patrimonio,
     }
   })
 

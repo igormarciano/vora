@@ -149,6 +149,14 @@ middleware.ts    → proteção de rotas + refresh de sessão
   `gastos_fixos.person_type`. Apenas segmentação analítica: **não altera nenhum
   cálculo** (receitas, gastos, economia, status, saldo livre).
 
+- `add_ocorrencias_status_per_month_paid` (Change Request 003, item 5): cria a
+  tabela `ocorrencias_status` (id, user_id, origem_tipo `'gasto_fixo'|'gasto_variavel'`,
+  origem_id, mes_referencia, is_paid, created_at, `unique(origem_id, mes_referencia)`)
+  com RLS por `user_id`. Registra o status pago/pendente de **ocorrências
+  projetadas** (recorrências de gastos fixos e parcelas futuras de gastos
+  variáveis) por competência mensal, sem duplicar o registro de origem. Ver
+  seção "Status pago por competência mensal" abaixo.
+
 ---
 
 ## Recorrência de gastos fixos (Change Request 001, item 4)
@@ -237,6 +245,88 @@ idênticos aos calculados antes desta mudança.
 Os gráficos só aparecem quando `totalReceitas > 0` (mesma condição que hoje
 esconde o card de configuração inicial), evitando gráficos vazios para quem
 ainda não cadastrou nada.
+
+---
+
+## Status pago por competência mensal (Change Request 003, itens 5 e 6)
+
+**Item 5 — status pago pertence à instância mensal, nunca à regra recorrente.**
+Um gasto fixo recorrente (ou uma compra parcelada) é armazenado uma única vez e
+projetado para os meses seguintes em memória (ver seções acima). O `is_paid` do
+registro de origem vale apenas para o **mês de origem**. Para os meses projetados,
+o status pago/pendente é gravado na tabela `ocorrencias_status`, por competência:
+
+- `alternarPagoGastoFixo(id, is_paid, mes_referencia)` e
+  `alternarPagoGastoVariavel(id, is_paid, mes_referencia)` (em
+  `app/(auth)/controle/actions.ts`) recebem o mês exibido. Se for o mês de origem,
+  atualizam o próprio registro; se for um mês projetado, fazem `upsert` em
+  `ocorrencias_status` (helper `alternarPagoOcorrencia`).
+- `app/(auth)/gastos/page.tsx` busca `ocorrencias_status` do mês e aplica o status
+  às ocorrências projetadas (default = pendente). Os registros do próprio mês de
+  origem mantêm o seu `is_paid`.
+- O mês exibido chega aos toggles via `MesGastosContext` em
+  `components/gastos/GastosClient.tsx`. `GastoCard` sincroniza o estado interno
+  com o prop `isPaid` (a mesma ocorrência pode estar paga em um mês e pendente em
+  outro ao navegar entre meses).
+
+Assim, marcar "Internet" como paga em julho **não** afeta agosto/setembro.
+
+**Item 6 — recorrência não retroativa.** Ao criar um lançamento, o
+`mes_referencia` inicial é `max(mês selecionado, mês atual)` via
+`mesReferenciaInicial(mesSelecionado)` em `lib/engine`. A tela de Gastos passa o
+mês em foco (`mesSelecionado`) para os formulários → `criarGastoFixo` /
+`criarGastoVariavel`. Uma recorrência criada em julho começa em julho (ou no mês
+futuro selecionado) e nunca em meses anteriores.
+
+---
+
+## Onboarding flexível (Change Request 003, item 7)
+
+`app/onboarding/page.tsx` abre com uma tela de escolha (`EscolhaInicial`):
+
+- **Explorar sozinho** → `marcarSetupCompleto()` e vai direto para `/dashboard`.
+- **Começar com ajuda da Vora** → segue os slides de onboarding atuais → `/setup`
+  (fluxo guiado / `SetupWizard`).
+
+---
+
+## Projeção de patrimônio (Change Request 003, itens 8 e 9)
+
+O gráfico de evolução patrimonial (`EvolucaoPatrimonialChart`) usa a fórmula:
+
+```
+Patrimônio Futuro = Patrimônio Atual + Economias Futuras Acumuladas + Rentabilidade Projetada
+```
+
+Calculado em `app/(auth)/dashboard/page.tsx`, composto mês a mês a partir do
+patrimônio atual (soma dos `investimentos.valor`):
+
+- Mês atual = patrimônio atual.
+- Cada mês seguinte = mês anterior + economia prevista + rendimento.
+- **Economia prevista**: a economia real calculada do mês (`projecao[i].economia`);
+  quando o mês não tem receita projetada, recorre à meta configurada
+  (`receita × meta%`).
+- **Rendimento**: patrimônio anterior × taxa mensal ponderada pela
+  `rentabilidade_anual` dos investimentos.
+
+As três linhas do gráfico: patrimônio total (projetado), patrimônio atual
+(linha-base constante) e economias acumuladas.
+
+---
+
+## Ajustes de UX (Change Request 003, itens 1–4)
+
+- **Item 1** — seletor de emoji compacto no cadastro de categorias
+  (`CategorySelect` inline e `CustomCategoriesManager`): emoji em largura fixa
+  reduzida, campo de nome em destaque.
+- **Item 2** — novas cores de cartão Roxo `#7C3AED` e Laranja `#F97316` em
+  `PALETA_CARTOES` (`components/gastos/GastosClient.tsx`), mantendo as anteriores.
+- **Item 3** — cartões usam a própria cor como fundo translúcido (10–15%) via
+  `corComOpacidade(hex, alpha)` em `lib/engine`: `CartaoRow`, grupos "Por cartão"
+  e o cabeçalho da Central de Cartões.
+- **Item 4** — CTAs primários "Adicionar Receita" e "Adicionar Gasto" com o
+  gradiente principal (`linear-gradient(135deg, #57cc99, #38a3a5)`), acima da
+  listagem (prop `variant="primary"` em `FormReceita` e `ModalAdicionarGasto`).
 
 ---
 

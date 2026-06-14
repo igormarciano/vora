@@ -10,6 +10,8 @@ import { CurrencyInput } from '@/components/ui/CurrencyInput'
 interface FormReceitaProps {
   item?: Receita
   onSuccess?: () => void
+  /** 'link' = botão de texto sálvia (padrão); 'primary' = CTA gradiente em destaque (Change Request 003, item 4) */
+  variant?: 'link' | 'primary'
 }
 
 const TIPOS = [
@@ -18,7 +20,7 @@ const TIPOS = [
   { value: 'outros', label: 'Outros' },
 ]
 
-export function FormReceita({ item, onSuccess }: FormReceitaProps) {
+export function FormReceita({ item, onSuccess, variant = 'link' }: FormReceitaProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [nome, setNome] = useState(item?.nome ?? '')
@@ -57,16 +59,30 @@ export function FormReceita({ item, onSuccess }: FormReceitaProps) {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className={item
-          ? 'p-1.5 rounded text-[#6b7280] hover:text-[#3c4a3c] hover:bg-[#f2ede7] transition-colors'
-          : 'flex items-center gap-2 text-[14px] font-medium text-[#8faf8f] hover:text-[#4f604f] transition-colors'
-        }
-        title={item ? 'Editar' : undefined}
-      >
-        {item ? <Pencil size={15} /> : <><Plus size={16} /><span>Adicionar receita</span></>}
-      </button>
+      {item ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="p-1.5 rounded text-[#6b7280] hover:text-[#3c4a3c] hover:bg-[#f2ede7] transition-colors"
+          title="Editar"
+        >
+          <Pencil size={15} />
+        </button>
+      ) : variant === 'primary' ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-medium text-[15px] text-white transition-opacity hover:opacity-90 shadow-sm"
+          style={{ background: 'linear-gradient(135deg, #57cc99, #38a3a5)' }}
+        >
+          <Plus size={18} /><span>Adicionar Receita</span>
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2 text-[14px] font-medium text-[#8faf8f] hover:text-[#4f604f] transition-colors"
+        >
+          <Plus size={16} /><span>Adicionar receita</span>
+        </button>
+      )}
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
