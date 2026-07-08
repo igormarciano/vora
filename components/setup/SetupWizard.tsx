@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Plus, X, ChevronLeft } from 'lucide-react'
 import Image from 'next/image'
-import { salvarSetupInicial, marcarSetupCompleto } from '@/app/setup/actions'
+import { salvarSetupInicial } from '@/app/setup/actions'
 import { formatCurrency } from '@/lib/engine'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -14,30 +14,44 @@ interface ExpenseItem {
   icon: string
   nome: string
   valor: number
+  /** Categoria real do enum usado em FormGastoFixo/FormGastoVariavel — não uma string livre. */
+  categoria: string
 }
 
-type Step = 'renda' | 'fixos' | 'variaveis' | 'lazer' | 'resumo'
+type Step = 'renda' | 'meta' | 'fixos' | 'variaveis' | 'lazer' | 'resumo'
 
-const STEPS: Step[] = ['renda', 'fixos', 'variaveis', 'lazer', 'resumo']
+const STEPS: Step[] = ['renda', 'meta', 'fixos', 'variaveis', 'lazer', 'resumo']
+
+/** Meta oficial da Vora — mesmo número comunicado em Configurações. */
+const META_ECONOMIA_DEFAULT = 30
+
+/** Categoria "Outros" real de cada contexto (CATEGORIAS_PF em FormGastoFixo / CATEGORIAS em FormGastoVariavel) — usada para itens customizados. */
+const CATEGORIA_OUTROS_FIXO = '🔖 Outros'
+const CATEGORIA_OUTROS_VARIAVEL = '🔧 Outros'
+
+const SETUP_DRAFT_KEY = 'vora_setup_wizard_draft'
 
 // ── Suggestions ───────────────────────────────────────────────────────────────
+// `categoria` mapeia cada sugestão para o valor real do enum usado no resto do
+// app (CATEGORIAS_PF em FormGastoFixo.tsx / CATEGORIAS em FormGastoVariavel.tsx),
+// para que o gasto criado no onboarding caia no filtro/agrupamento correto.
 
 const FIXOS_SUGESTOES = [
-  { icon: '🏠', nome: 'Aluguel / Moradia', valor: 1200 },
-  { icon: '⚡', nome: 'Energia elétrica', valor: 120 },
-  { icon: '💧', nome: 'Água', valor: 60 },
-  { icon: '📶', nome: 'Internet', valor: 100 },
-  { icon: '📱', nome: 'Celular', valor: 70 },
-  { icon: '🎬', nome: 'Streamings', valor: 80 },
+  { icon: '🏠', nome: 'Aluguel / Moradia', valor: 1200, categoria: '🏠 Moradia' },
+  { icon: '⚡', nome: 'Energia elétrica', valor: 120, categoria: '⚡ Energia/Água' },
+  { icon: '💧', nome: 'Água', valor: 60, categoria: '⚡ Energia/Água' },
+  { icon: '📶', nome: 'Internet', valor: 100, categoria: '📡 Internet/Telefone' },
+  { icon: '📱', nome: 'Celular', valor: 70, categoria: '📡 Internet/Telefone' },
+  { icon: '🎬', nome: 'Streamings', valor: 80, categoria: '📺 Streaming' },
 ]
 
 const VARIAVEIS_SUGESTOES = [
-  { icon: '🛒', nome: 'Mercado', valor: 500 },
-  { icon: '🚌', nome: 'Transporte', valor: 200 },
-  { icon: '💊', nome: 'Farmácia / Saúde', valor: 80 },
-  { icon: '🧴', nome: 'Higiene / Beleza', valor: 100 },
-  { icon: '👕', nome: 'Roupas', valor: 150 },
-  { icon: '🐾', nome: 'Pet', valor: 120 },
+  { icon: '🛒', nome: 'Mercado', valor: 500, categoria: '🛒 Mercado' },
+  { icon: '🚌', nome: 'Transporte', valor: 200, categoria: '🚌 Transporte' },
+  { icon: '💊', nome: 'Farmácia / Saúde', valor: 80, categoria: '💊 Farmácia' },
+  { icon: '🧴', nome: 'Higiene / Beleza', valor: 100, categoria: '💄 Beleza' },
+  { icon: '👕', nome: 'Roupas', valor: 150, categoria: '👗 Roupas' },
+  { icon: '🐾', nome: 'Pet', valor: 120, categoria: '🐾 Pets' },
 ]
 
 const LIFESTYLE_OPTIONS = [
@@ -50,25 +64,63 @@ const RENDA_CHIPS = [2000, 3000, 4000, 5000, 7000, 10000]
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
+interface WizardDraft {
+  step: Step
+  renda: string
+  meta: number
+  fixos: ExpenseItem[]
+  variaveis: ExpenseItem[]
+  lazer: number
+  lifestyle: string
+}
+
 export function SetupWizard() {
   const router = useRouter()
+  const [hydrated, setHydrated] = useState(false)
   const [step, setStep] = useState<Step>('renda')
   const [loading, setLoading] = useState(false)
 
   // State per step
   const [renda, setRenda] = useState('')
+  const [meta, setMeta] = useState(META_ECONOMIA_DEFAULT)
   const [fixos, setFixos] = useState<ExpenseItem[]>([])
   const [fixoNome, setFixoNome] = useState('')
   const [fixoValor, setFixoValor] = useState('')
-  const [addedFixoIds, setAddedFixoIds] = useState<Set<string>>(new Set())
 
   const [variaveis, setVariaveis] = useState<ExpenseItem[]>([])
   const [varNome, setVarNome] = useState('')
   const [varValor, setVarValor] = useState('')
-  const [addedVarIds, setAddedVarIds] = useState<Set<string>>(new Set())
 
   const [lazer, setLazer] = useState(500)
   const [lifestyle, setLifestyle] = useState('moderado')
+
+  // Restaura rascunho salvo em sessionStorage — evita perder o que já foi
+  // preenchido se a página recarregar sem querer no meio do wizard.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(SETUP_DRAFT_KEY)
+      if (raw) {
+        const draft: WizardDraft = JSON.parse(raw)
+        setStep(draft.step)
+        setRenda(draft.renda)
+        setMeta(draft.meta)
+        setFixos(draft.fixos)
+        setVariaveis(draft.variaveis)
+        setLazer(draft.lazer)
+        setLifestyle(draft.lifestyle)
+      }
+    } catch {
+      // rascunho corrompido ou indisponível — segue com os valores padrão
+    } finally {
+      setHydrated(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!hydrated) return
+    const draft: WizardDraft = { step, renda, meta, fixos, variaveis, lazer, lifestyle }
+    sessionStorage.setItem(SETUP_DRAFT_KEY, JSON.stringify(draft))
+  }, [hydrated, step, renda, meta, fixos, variaveis, lazer, lifestyle])
 
   const stepIndex = STEPS.indexOf(step)
   const progress = ((stepIndex) / (STEPS.length - 1)) * 100
@@ -78,6 +130,7 @@ export function SetupWizard() {
   const totalVariaveis = variaveis.reduce((s, i) => s + i.valor, 0)
   const totalGastos = totalFixos + totalVariaveis + lazer
   const sobra = rendaNum - totalGastos
+  const metaValorReais = rendaNum * (meta / 100)
 
   // ── Handlers ──
 
@@ -91,58 +144,51 @@ export function SetupWizard() {
   }
 
   function addFixoSugestao(s: typeof FIXOS_SUGESTOES[0]) {
-    if (addedFixoIds.has(s.nome)) return
-    setFixos(prev => [...prev, s])
-    setAddedFixoIds(prev => new Set([...prev, s.nome]))
+    if (fixos.some(f => f.nome === s.nome)) return
+    setFixos(prev => [...prev, { icon: s.icon, nome: s.nome, valor: s.valor, categoria: s.categoria }])
   }
   function addFixoCustom() {
     const nome = fixoNome.trim()
     const valor = parseFloat(fixoValor.replace(',', '.'))
     if (!nome || !valor || valor <= 0) { toast.error('Preenche nome e valor 😉'); return }
-    setFixos(prev => [...prev, { icon: '📌', nome, valor }])
+    setFixos(prev => [...prev, { icon: '📌', nome, valor, categoria: CATEGORIA_OUTROS_FIXO }])
     setFixoNome(''); setFixoValor('')
   }
-  function removeFixo(idx: number) {
-    const removed = fixos[idx]
-    setFixos(prev => prev.filter((_, i) => i !== idx))
-    setAddedFixoIds(prev => { const s = new Set(prev); s.delete(removed.nome); return s })
+  function updateFixoValor(nome: string, novoValor: number) {
+    setFixos(prev => prev.map(f => (f.nome === nome ? { ...f, valor: novoValor } : f)))
+  }
+  function removeFixo(nome: string) {
+    setFixos(prev => prev.filter(f => f.nome !== nome))
   }
 
   function addVarSugestao(s: typeof VARIAVEIS_SUGESTOES[0]) {
-    if (addedVarIds.has(s.nome)) return
-    setVariaveis(prev => [...prev, s])
-    setAddedVarIds(prev => new Set([...prev, s.nome]))
+    if (variaveis.some(v => v.nome === s.nome)) return
+    setVariaveis(prev => [...prev, { icon: s.icon, nome: s.nome, valor: s.valor, categoria: s.categoria }])
   }
   function addVarCustom() {
     const nome = varNome.trim()
     const valor = parseFloat(varValor.replace(',', '.'))
     if (!nome || !valor || valor <= 0) { toast.error('Preenche nome e valor 😉'); return }
-    setVariaveis(prev => [...prev, { icon: '📌', nome, valor }])
+    setVariaveis(prev => [...prev, { icon: '📌', nome, valor, categoria: CATEGORIA_OUTROS_VARIAVEL }])
     setVarNome(''); setVarValor('')
   }
-  function removeVar(idx: number) {
-    const removed = variaveis[idx]
-    setVariaveis(prev => prev.filter((_, i) => i !== idx))
-    setAddedVarIds(prev => { const s = new Set(prev); s.delete(removed.nome); return s })
+  function updateVarValor(nome: string, novoValor: number) {
+    setVariaveis(prev => prev.map(v => (v.nome === nome ? { ...v, valor: novoValor } : v)))
+  }
+  function removeVar(nome: string) {
+    setVariaveis(prev => prev.filter(v => v.nome !== nome))
   }
 
   function selectLifestyle(val: number, id: string) {
     setLazer(val); setLifestyle(id)
   }
 
-  async function handlePular() {
-    setLoading(true)
-    await marcarSetupCompleto()
-    setLoading(false)
-    router.refresh()
-    router.push('/dashboard')
-  }
-
   async function handleFinish() {
     setLoading(true)
-    const result = await salvarSetupInicial({ renda: rendaNum, fixos, variaveis, lazer })
+    const result = await salvarSetupInicial({ renda: rendaNum, meta, fixos, variaveis, lazer })
     setLoading(false)
     if (result.error) { toast.error(result.error); return }
+    sessionStorage.removeItem(SETUP_DRAFT_KEY)
     router.refresh()
     router.push('/dashboard')
   }
@@ -160,11 +206,6 @@ export function SetupWizard() {
           {step !== 'renda' && (
             <button onClick={goBack} className="ml-auto flex items-center gap-1 text-[13px] text-[#6b7280] hover:text-[#3c4a3c] transition-colors">
               <ChevronLeft size={16} /> Voltar
-            </button>
-          )}
-          {step === 'renda' && (
-            <button onClick={handlePular} disabled={loading} className="ml-auto text-[13px] text-[#a5bfa5] hover:text-[#6b7280] transition-colors disabled:opacity-50">
-              Pular tudo
             </button>
           )}
         </div>
@@ -241,12 +282,65 @@ export function SetupWizard() {
           </div>
         )}
 
+        {/* ── STEP: META DE ECONOMIA ── */}
+        {step === 'meta' && (
+          <div className="flex flex-col gap-6">
+            <Mascot msg="Com sua renda em mãos, bora definir uma meta. Isso muda como eu vou te mostrar seu mês daqui pra frente." />
+            <div>
+              <p className="text-[11px] font-medium text-[#8faf8f] uppercase tracking-widest mb-1">Passo 2 — Meta de economia</p>
+              <h2 className="font-fraunces text-[30px] text-[#3c4a3c] leading-tight mb-2">
+                Quanto você quer<br />guardar por mês?
+              </h2>
+              <p className="text-[14px] text-[#6b7280] leading-relaxed">
+                A Vora recomenda 30% — mas o número é seu. Ajusta como fizer sentido pra sua realidade.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-[#ece4db] p-5">
+              <div className="text-center mb-4">
+                <div className="font-fraunces text-[44px] text-[#3c4a3c] leading-none">
+                  {meta}<span className="text-[20px] text-[#6b7280]">%</span>
+                </div>
+                <div className="text-[13px] text-[#6b7280] mt-1">
+                  {rendaNum > 0 ? `≈ ${formatCurrency(metaValorReais)} por mês` : 'da sua renda mensal'}
+                </div>
+              </div>
+              <input
+                type="range" min={0} max={100} step={1} value={meta}
+                onChange={e => setMeta(Number(e.target.value))}
+                className="w-full accent-[#8faf8f]"
+              />
+              <div className="flex justify-between text-[12px] text-[#6b7280] mt-1 mb-4">
+                <span>0%</span><span>100%</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-[12px] text-[#6b7280] shrink-0">Ajuste fino</label>
+                <div className="relative flex-1">
+                  <input
+                    type="number" min={0} max={100} value={meta}
+                    onChange={e => setMeta(Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
+                    className="w-full border border-[#ece4db] rounded-lg pl-3 pr-8 py-2 text-[14px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-[#6b7280]">%</span>
+                </div>
+              </div>
+            </div>
+
+            {rendaNum > 0 && meta < 20 && (
+              <div className="bg-[#ece4db] rounded-xl px-4 py-3 text-[13px] text-[#6b7280] leading-relaxed border-l-4 border-[#8faf8f]">
+                Combinado — isso significa cerca de {formatCurrency(metaValorReais)} ficando disponível todo mês, mas fora da meta ideal.
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── STEP: FIXOS ── */}
         {step === 'fixos' && (
           <div className="flex flex-col gap-5">
             <Mascot msg="Esses são os gastos que chegam todo mês, certinhos. Não precisa lembrar de todos agora." />
             <div>
-              <p className="text-[11px] font-medium text-[#8faf8f] uppercase tracking-widest mb-1">Passo 2 — Gastos fixos</p>
+              <p className="text-[11px] font-medium text-[#8faf8f] uppercase tracking-widest mb-1">Passo 3 — Gastos fixos</p>
               <h2 className="font-fraunces text-[30px] text-[#3c4a3c] leading-tight mb-2">
                 O que você paga<br />todo mês?
               </h2>
@@ -258,32 +352,45 @@ export function SetupWizard() {
             <div>
               <p className="text-[11px] font-medium text-[#6b7280] uppercase tracking-widest mb-3">Sugestões comuns</p>
               <div className="grid grid-cols-2 gap-2">
-                {FIXOS_SUGESTOES.map(s => (
-                  <button
-                    key={s.nome}
-                    onClick={() => addFixoSugestao(s)}
-                    disabled={addedFixoIds.has(s.nome)}
-                    className="flex items-center gap-3 p-3 rounded-2xl border text-left transition-all"
-                    style={{
-                      borderColor: addedFixoIds.has(s.nome) ? '#8faf8f' : '#ece4db',
-                      backgroundColor: addedFixoIds.has(s.nome) ? '#dce6dc' : 'white',
-                      opacity: addedFixoIds.has(s.nome) ? 0.6 : 1,
-                    }}
-                  >
-                    <span className="text-[20px]">{s.icon}</span>
-                    <div>
-                      <div className="text-[13px] font-medium text-[#3c4a3c]">{s.nome}</div>
-                      <div className="text-[11px] text-[#6b7280]">{addedFixoIds.has(s.nome) ? 'Adicionado ✓' : 'Toque para add'}</div>
-                    </div>
-                  </button>
-                ))}
+                {FIXOS_SUGESTOES.map(s => {
+                  const added = fixos.find(f => f.nome === s.nome)
+                  if (added) {
+                    return (
+                      <div key={s.nome} className="relative flex items-center gap-3 p-3 rounded-2xl border" style={{ borderColor: '#8faf8f', backgroundColor: '#dce6dc' }}>
+                        <button type="button" onClick={() => removeFixo(s.nome)} aria-label={`Remover ${s.nome}`}
+                          className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-white/70 flex items-center justify-center text-[#6b7280] hover:text-[#ef4444] transition-colors">
+                          <X size={12} />
+                        </button>
+                        <span className="text-[20px]">{s.icon}</span>
+                        <div>
+                          <div className="text-[13px] font-medium text-[#3c4a3c]">{s.nome}</div>
+                          <EditableValor valor={added.valor} onChange={v => updateFixoValor(s.nome, v)} />
+                        </div>
+                      </div>
+                    )
+                  }
+                  return (
+                    <button
+                      key={s.nome}
+                      onClick={() => addFixoSugestao(s)}
+                      className="flex items-center gap-3 p-3 rounded-2xl border text-left transition-all"
+                      style={{ borderColor: '#ece4db', backgroundColor: 'white' }}
+                    >
+                      <span className="text-[20px]">{s.icon}</span>
+                      <div>
+                        <div className="text-[13px] font-medium text-[#3c4a3c]">{s.nome}</div>
+                        <div className="text-[11px] text-[#6b7280]">Toque para add</div>
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
-            {fixos.length > 0 && (
+            {fixos.some(f => f.categoria === CATEGORIA_OUTROS_FIXO) && (
               <div>
                 <p className="text-[11px] font-medium text-[#6b7280] uppercase tracking-widest mb-2">Adicionados</p>
-                <ExpenseList items={fixos} onRemove={removeFixo} />
+                <ExpenseList items={fixos.filter(f => f.categoria === CATEGORIA_OUTROS_FIXO)} onRemove={removeFixo} onValorChange={updateFixoValor} />
               </div>
             )}
 
@@ -316,7 +423,7 @@ export function SetupWizard() {
           <div className="flex flex-col gap-5">
             <Mascot msg="Esses variam um pouco a cada mês — mas é bom ter uma noção pra a projeção ficar mais próxima da realidade." />
             <div>
-              <p className="text-[11px] font-medium text-[#8faf8f] uppercase tracking-widest mb-1">Passo 3 — Gastos variáveis</p>
+              <p className="text-[11px] font-medium text-[#8faf8f] uppercase tracking-widest mb-1">Passo 4 — Gastos variáveis</p>
               <h2 className="font-fraunces text-[30px] text-[#3c4a3c] leading-tight mb-2">
                 E o que muda<br />todo mês?
               </h2>
@@ -328,32 +435,45 @@ export function SetupWizard() {
             <div>
               <p className="text-[11px] font-medium text-[#6b7280] uppercase tracking-widest mb-3">Sugestões comuns</p>
               <div className="grid grid-cols-2 gap-2">
-                {VARIAVEIS_SUGESTOES.map(s => (
-                  <button
-                    key={s.nome}
-                    onClick={() => addVarSugestao(s)}
-                    disabled={addedVarIds.has(s.nome)}
-                    className="flex items-center gap-3 p-3 rounded-2xl border text-left transition-all"
-                    style={{
-                      borderColor: addedVarIds.has(s.nome) ? '#8faf8f' : '#ece4db',
-                      backgroundColor: addedVarIds.has(s.nome) ? '#dce6dc' : 'white',
-                      opacity: addedVarIds.has(s.nome) ? 0.6 : 1,
-                    }}
-                  >
-                    <span className="text-[20px]">{s.icon}</span>
-                    <div>
-                      <div className="text-[13px] font-medium text-[#3c4a3c]">{s.nome}</div>
-                      <div className="text-[11px] text-[#6b7280]">{addedVarIds.has(s.nome) ? 'Adicionado ✓' : 'Toque para add'}</div>
-                    </div>
-                  </button>
-                ))}
+                {VARIAVEIS_SUGESTOES.map(s => {
+                  const added = variaveis.find(v => v.nome === s.nome)
+                  if (added) {
+                    return (
+                      <div key={s.nome} className="relative flex items-center gap-3 p-3 rounded-2xl border" style={{ borderColor: '#8faf8f', backgroundColor: '#dce6dc' }}>
+                        <button type="button" onClick={() => removeVar(s.nome)} aria-label={`Remover ${s.nome}`}
+                          className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-white/70 flex items-center justify-center text-[#6b7280] hover:text-[#ef4444] transition-colors">
+                          <X size={12} />
+                        </button>
+                        <span className="text-[20px]">{s.icon}</span>
+                        <div>
+                          <div className="text-[13px] font-medium text-[#3c4a3c]">{s.nome}</div>
+                          <EditableValor valor={added.valor} onChange={v => updateVarValor(s.nome, v)} />
+                        </div>
+                      </div>
+                    )
+                  }
+                  return (
+                    <button
+                      key={s.nome}
+                      onClick={() => addVarSugestao(s)}
+                      className="flex items-center gap-3 p-3 rounded-2xl border text-left transition-all"
+                      style={{ borderColor: '#ece4db', backgroundColor: 'white' }}
+                    >
+                      <span className="text-[20px]">{s.icon}</span>
+                      <div>
+                        <div className="text-[13px] font-medium text-[#3c4a3c]">{s.nome}</div>
+                        <div className="text-[11px] text-[#6b7280]">Toque para add</div>
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
-            {variaveis.length > 0 && (
+            {variaveis.some(v => v.categoria === CATEGORIA_OUTROS_VARIAVEL) && (
               <div>
                 <p className="text-[11px] font-medium text-[#6b7280] uppercase tracking-widest mb-2">Adicionados</p>
-                <ExpenseList items={variaveis} onRemove={removeVar} />
+                <ExpenseList items={variaveis.filter(v => v.categoria === CATEGORIA_OUTROS_VARIAVEL)} onRemove={removeVar} onValorChange={updateVarValor} />
               </div>
             )}
 
@@ -386,7 +506,7 @@ export function SetupWizard() {
           <div className="flex flex-col gap-6">
             <Mascot msg="Essa parte é importante. Quanto você gasta pra viver bem no dia a dia — bar, restaurante, rolê?" />
             <div>
-              <p className="text-[11px] font-medium text-[#8faf8f] uppercase tracking-widest mb-1">Passo 4 — Dia a dia</p>
+              <p className="text-[11px] font-medium text-[#8faf8f] uppercase tracking-widest mb-1">Passo 5 — Dia a dia</p>
               <h2 className="font-fraunces text-[30px] text-[#3c4a3c] leading-tight mb-2">
                 O que você curte<br />gastar por mês?
               </h2>
@@ -456,29 +576,35 @@ export function SetupWizard() {
         {step === 'resumo' && (
           <div className="flex flex-col gap-6">
             <div className="text-center py-4">
-              <div className="text-[56px] mb-2">{sobra >= 500 ? '🌱' : sobra >= 0 ? '🌿' : '🤔'}</div>
+              <div className="text-[56px] mb-2">{sobra >= metaValorReais ? '🌱' : sobra >= 0 ? '🌿' : '🤔'}</div>
               <p className="text-[11px] font-medium text-[#8faf8f] uppercase tracking-widest mb-2">Seu mês em um olhar</p>
               <h2 className="font-fraunces text-[28px] text-[#3c4a3c] leading-tight">
-                {sobra >= 500
-                  ? <>Olha que <em className="italic text-[#8faf8f]">sobra</em> boa.</>
+                {sobra >= metaValorReais
+                  ? <>Você está batendo sua meta de guardar {meta}%. Olha que <em className="italic text-[#8faf8f]">sobra</em> boa.</>
                   : sobra >= 0
-                  ? 'Ficou assim o seu mês.'
+                  ? `Ficou assim o seu mês — um pouco abaixo da meta de ${meta}%, mas dá pra ajustar.`
                   : <>Olha isso<br />aqui comigo.</>
                 }
               </h2>
             </div>
 
             <div className="bg-white rounded-2xl border border-[#ece4db] overflow-hidden">
-              {[
-                { label: '💰 Renda mensal', value: formatCurrency(rendaNum), highlight: false },
-                { label: '🏠 Gastos fixos', value: formatCurrency(totalFixos), highlight: false },
-                { label: '🛒 Gastos variáveis', value: formatCurrency(totalVariaveis), highlight: false },
-                { label: '🎉 Dia a dia', value: formatCurrency(lazer), highlight: false },
-              ].map((row, i) => (
-                <div key={i} className="flex justify-between items-center px-5 py-3.5 border-b border-[#f2ede7]">
+              {([
+                { label: '💰 Renda mensal', value: formatCurrency(rendaNum), step: 'renda' as Step },
+                { label: '🎯 Meta de economia', value: `${meta}% (${formatCurrency(metaValorReais)})`, step: 'meta' as Step },
+                { label: '🏠 Gastos fixos', value: formatCurrency(totalFixos), step: 'fixos' as Step },
+                { label: '🛒 Gastos variáveis', value: formatCurrency(totalVariaveis), step: 'variaveis' as Step },
+                { label: '🎉 Dia a dia', value: formatCurrency(lazer), step: 'lazer' as Step },
+              ]).map((row) => (
+                <button
+                  key={row.label}
+                  type="button"
+                  onClick={() => setStep(row.step)}
+                  className="w-full flex justify-between items-center px-5 py-3.5 border-b border-[#f2ede7] text-left hover:bg-[#f9f7f4] transition-colors"
+                >
                   <span className="text-[14px] text-[#6b7280]">{row.label}</span>
                   <span className="text-[14px] font-medium text-[#3c4a3c]">{row.value}</span>
-                </div>
+                </button>
               ))}
               <div className="flex justify-between items-center px-5 py-4">
                 <span className="text-[15px] font-medium text-[#3c4a3c]">Sobra estimada</span>
@@ -492,7 +618,7 @@ export function SetupWizard() {
             </div>
 
             <Mascot msg={
-              sobra >= 500
+              sobra >= metaValorReais
                 ? 'Seu mês está bem equilibrado. Você tem uma margem real pra respirar — e talvez até guardar algo.'
                 : sobra >= 0
                 ? 'Não sobra muito, mas o mês fecha. A gente pode ajustar qualquer coisa quando quiser.'
@@ -543,23 +669,65 @@ function Mascot({ msg }: { msg: string }) {
   )
 }
 
-function ExpenseList({ items, onRemove }: { items: ExpenseItem[], onRemove: (i: number) => void }) {
+function ExpenseList({ items, onRemove, onValorChange }: { items: ExpenseItem[], onRemove: (nome: string) => void, onValorChange: (nome: string, valor: number) => void }) {
   return (
     <div className="flex flex-col gap-2">
-      {items.map((item, i) => (
-        <div key={i} className="flex items-center gap-3 bg-white border border-[#ece4db] rounded-2xl px-4 py-3">
+      {items.map(item => (
+        <div key={item.nome} className="flex items-center gap-3 bg-white border border-[#ece4db] rounded-2xl px-4 py-3">
           <div className="w-9 h-9 rounded-xl bg-[#f2ede7] flex items-center justify-center text-[18px] shrink-0">
             {item.icon}
           </div>
           <div className="flex-1">
             <div className="text-[14px] font-medium text-[#3c4a3c]">{item.nome}</div>
-            <div className="text-[12px] text-[#6b7280]">{formatCurrency(item.valor)}/mês</div>
+            <EditableValor valor={item.valor} onChange={v => onValorChange(item.nome, v)} suffix="/mês" />
           </div>
-          <button onClick={() => onRemove(i)} className="w-7 h-7 rounded-full bg-[#f2ede7] flex items-center justify-center text-[#6b7280] hover:bg-[#fef2f2] hover:text-[#ef4444] transition-colors">
+          <button onClick={() => onRemove(item.nome)} className="w-7 h-7 rounded-full bg-[#f2ede7] flex items-center justify-center text-[#6b7280] hover:bg-[#fef2f2] hover:text-[#ef4444] transition-colors">
             <X size={14} />
           </button>
         </div>
       ))}
     </div>
+  )
+}
+
+/**
+ * Valor clicável que abre um input inline para edição (foco automático,
+ * confirma com Enter/blur). Nenhum valor de gasto fica travado depois de
+ * adicionado — o usuário pode reabrir e ajustar enquanto estiver no passo.
+ */
+function EditableValor({ valor, onChange, suffix }: { valor: number; onChange: (v: number) => void; suffix?: string }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(String(valor))
+
+  function confirm() {
+    const num = parseFloat(draft.replace(',', '.'))
+    if (!isNaN(num) && num > 0) onChange(num)
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        inputMode="decimal"
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onFocus={e => e.target.select()}
+        onBlur={confirm}
+        onKeyDown={e => { if (e.key === 'Enter') confirm() }}
+        onClick={e => e.stopPropagation()}
+        className="w-24 border border-[#8faf8f] rounded-lg px-2 py-1 text-[12px] text-[#3c4a3c] outline-none bg-white"
+      />
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={e => { e.stopPropagation(); setDraft(String(valor)); setEditing(true) }}
+      className="text-[12px] text-[#6b7280] underline decoration-dotted underline-offset-2 hover:text-[#3c4a3c] transition-colors"
+    >
+      {formatCurrency(valor)}{suffix}
+    </button>
   )
 }

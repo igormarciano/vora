@@ -74,7 +74,7 @@ export function ConfiguracoesClient({ profile, customCategories }: Configuracoes
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[14px] text-[#9ca3af]">%</span>
             </div>
             <p className="text-[12px] text-[#9ca3af]">
-              Recomendado: 20% (regra 50/30/20)
+              Recomendado: 30%
             </p>
           </div>
 

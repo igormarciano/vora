@@ -23,10 +23,14 @@ interface SetupItem {
   icon: string
   nome: string
   valor: number
+  /** Categoria real do enum usado em FormGastoFixo/FormGastoVariavel — não mais construída a partir de icon+nome. */
+  categoria: string
 }
 
 export async function salvarSetupInicial(data: {
   renda: number
+  /** Meta de economia (%) definida no passo 2 do wizard — mesma fonte de verdade usada em Configurações. */
+  meta: number
   fixos: SetupItem[]
   variaveis: SetupItem[]
   lazer: number
@@ -57,7 +61,7 @@ export async function salvarSetupInicial(data: {
         user_id: user.id,
         nome: f.nome,
         valor: f.valor,
-        categoria: f.icon + ' ' + f.nome,
+        categoria: f.categoria,
         recorrente: true,
         mes_referencia: mes,
       }))
@@ -72,7 +76,7 @@ export async function salvarSetupInicial(data: {
         user_id: user.id,
         nome: v.nome,
         valor: v.valor,
-        categoria: v.icon + ' ' + v.nome,
+        categoria: v.categoria,
         forma_pagamento: 'dinheiro',
         parcelado: false,
         mes_referencia: mes,
@@ -95,10 +99,14 @@ export async function salvarSetupInicial(data: {
     if (error) return { error: error.message }
   }
 
-  // Marcar setup como completo
-  await supabase.from('profiles').update({ setup_completo: true }).eq('id', user.id)
+  // Meta de economia (mesmo campo usado em Configurações) e setup completo
+  await supabase
+    .from('profiles')
+    .update({ meta_economia_percentual: data.meta, setup_completo: true })
+    .eq('id', user.id)
 
   revalidatePath('/dashboard')
   revalidatePath('/controle')
+  revalidatePath('/configuracoes')
   return {}
 }
