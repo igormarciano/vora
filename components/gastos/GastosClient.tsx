@@ -67,6 +67,7 @@ function MonthNavigator({ mes }: { mes: string }) {
 type SubTab = 'Fixos' | 'Variáveis'
 type Agrupamento = 'padrao' | 'categoria' | 'cartao'
 type StatusFiltro = 'todos' | 'pago' | 'pendente'
+type PessoaFiltro = 'todos' | 'PF' | 'PJ'
 type Ordenacao = 'recente' | 'antigo' | 'maior_valor' | 'menor_valor' | 'alfabetica'
 
 const ORDENACOES: { key: Ordenacao; label: string }[] = [
@@ -96,6 +97,8 @@ interface FiltrosBarProps {
   onCategoriaChange: (c: string | null) => void
   status: StatusFiltro
   onStatusChange: (s: StatusFiltro) => void
+  pessoa: PessoaFiltro
+  onPessoaChange: (p: PessoaFiltro) => void
   ordenacao: Ordenacao
   onOrdenacaoChange: (o: Ordenacao) => void
   tiposPagamento?: { value: string; label: string }[]
@@ -106,7 +109,7 @@ interface FiltrosBarProps {
 }
 
 function FiltrosBar({
-  categorias, categoria, onCategoriaChange, status, onStatusChange,
+  categorias, categoria, onCategoriaChange, status, onStatusChange, pessoa, onPessoaChange,
   ordenacao, onOrdenacaoChange, tiposPagamento, tipoPagamento, onTipoPagamentoChange,
   onLimpar, ativos,
 }: FiltrosBarProps) {
@@ -131,6 +134,12 @@ function FiltrosBar({
         <option value="todos">Pago e pendente</option>
         <option value="pago">Pago</option>
         <option value="pendente">Pendente</option>
+      </select>
+
+      <select value={pessoa} onChange={e => onPessoaChange(e.target.value as PessoaFiltro)} className={selectCls}>
+        <option value="todos">Física e jurídica</option>
+        <option value="PF">Pessoa física</option>
+        <option value="PJ">Pessoa jurídica</option>
       </select>
 
       {tiposPagamento && (
@@ -219,6 +228,7 @@ function FixosSection({ gastos, cartoes, customCategories, total }: { gastos: Ga
   const mes = useMesGastos()
   const [categoria, setCategoria] = useState<string | null>(null)
   const [status, setStatus] = useState<StatusFiltro>('todos')
+  const [pessoa, setPessoa] = useState<PessoaFiltro>('todos')
   const [ordenacao, setOrdenacao] = useState<Ordenacao>('recente')
 
   const categorias = useMemo(
@@ -230,13 +240,14 @@ function FixosSection({ gastos, cartoes, customCategories, total }: { gastos: Ga
     let result = gastos
     if (categoria) result = result.filter(g => g.categoria === categoria)
     if (status !== 'todos') result = result.filter(g => (status === 'pago' ? g.is_paid : !g.is_paid))
+    if (pessoa !== 'todos') result = result.filter(g => g.person_type === pessoa)
     return ordenarGastos(result, ordenacao)
-  }, [gastos, categoria, status, ordenacao])
+  }, [gastos, categoria, status, pessoa, ordenacao])
 
-  const ativos = (categoria ? 1 : 0) + (status !== 'todos' ? 1 : 0)
+  const ativos = (categoria ? 1 : 0) + (status !== 'todos' ? 1 : 0) + (pessoa !== 'todos' ? 1 : 0)
 
   function limpar() {
-    setCategoria(null); setStatus('todos'); setOrdenacao('recente')
+    setCategoria(null); setStatus('todos'); setPessoa('todos'); setOrdenacao('recente')
   }
 
   return (
@@ -248,6 +259,7 @@ function FixosSection({ gastos, cartoes, customCategories, total }: { gastos: Ga
           categorias={categorias}
           categoria={categoria} onCategoriaChange={setCategoria}
           status={status} onStatusChange={setStatus}
+          pessoa={pessoa} onPessoaChange={setPessoa}
           ordenacao={ordenacao} onOrdenacaoChange={setOrdenacao}
           onLimpar={limpar} ativos={ativos}
         />
@@ -295,6 +307,7 @@ function VariaveisSection({ gastos, cartoes, customCategories, total }: { gastos
   const [showCartoes, setShowCartoes] = useState(false)
   const [categoria, setCategoria] = useState<string | null>(null)
   const [status, setStatus] = useState<StatusFiltro>('todos')
+  const [pessoa, setPessoa] = useState<PessoaFiltro>('todos')
   const [tipoPagamento, setTipoPagamento] = useState<string | null>(null)
   const [ordenacao, setOrdenacao] = useState<Ordenacao>('recente')
 
@@ -307,14 +320,15 @@ function VariaveisSection({ gastos, cartoes, customCategories, total }: { gastos
     let result = gastos
     if (categoria) result = result.filter(g => g.categoria === categoria)
     if (status !== 'todos') result = result.filter(g => (status === 'pago' ? g.is_paid : !g.is_paid))
+    if (pessoa !== 'todos') result = result.filter(g => g.expense_nature === pessoa)
     if (tipoPagamento) result = result.filter(g => g.forma_pagamento === tipoPagamento)
     return ordenarGastos(result, ordenacao)
-  }, [gastos, categoria, status, tipoPagamento, ordenacao])
+  }, [gastos, categoria, status, pessoa, tipoPagamento, ordenacao])
 
-  const ativos = (categoria ? 1 : 0) + (status !== 'todos' ? 1 : 0) + (tipoPagamento ? 1 : 0)
+  const ativos = (categoria ? 1 : 0) + (status !== 'todos' ? 1 : 0) + (pessoa !== 'todos' ? 1 : 0) + (tipoPagamento ? 1 : 0)
 
   function limpar() {
-    setCategoria(null); setStatus('todos'); setTipoPagamento(null); setOrdenacao('recente')
+    setCategoria(null); setStatus('todos'); setPessoa('todos'); setTipoPagamento(null); setOrdenacao('recente')
   }
 
   return (
@@ -361,6 +375,7 @@ function VariaveisSection({ gastos, cartoes, customCategories, total }: { gastos
           categorias={categorias}
           categoria={categoria} onCategoriaChange={setCategoria}
           status={status} onStatusChange={setStatus}
+          pessoa={pessoa} onPessoaChange={setPessoa}
           tiposPagamento={TIPOS_PAGAMENTO} tipoPagamento={tipoPagamento} onTipoPagamentoChange={setTipoPagamento}
           ordenacao={ordenacao} onOrdenacaoChange={setOrdenacao}
           onLimpar={limpar} ativos={ativos}
