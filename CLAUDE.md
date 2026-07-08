@@ -33,6 +33,10 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Análise Mensal por IA (Fase 1)
+OPENAI_API_KEY=
+CRON_SECRET=
 ```
 
 ---
@@ -327,6 +331,44 @@ As três linhas do gráfico: patrimônio total (projetado), patrimônio atual
 - **Item 4** — CTAs primários "Adicionar Receita" e "Adicionar Gasto" com o
   gradiente principal (`linear-gradient(135deg, #57cc99, #38a3a5)`), acima da
   listagem (prop `variant="primary"` em `FormReceita` e `ModalAdicionarGasto`).
+
+---
+
+## Análise Mensal por IA (Fase 1 do plano de IA)
+
+Gera uma leitura curta do mês financeiro de cada usuário via OpenAI
+(`gpt-4o-mini`), sem interface de chat, de duas formas:
+
+- **Automática**: job de cron mensal, roda para todos os usuários.
+- **Sob demanda**: card "Veja dicas e um resumo da sua vida financeira" na
+  Visão Geral, com o CTA "Analisar minhas finanças" — chama
+  `gerarAnaliseSobDemanda` (`app/(auth)/dashboard/actions.ts`), que roda a
+  mesma lógica de agregação/prompt/IA para o usuário logado (RLS, sem service
+  role) e grava/atualiza a análise do mês. Depois de gerada, o card mostra o
+  resultado com um link "Analisar de novo".
+
+- **Rota:** `app/api/cron/analise-mensal/route.ts` (GET, protegida por
+  `Authorization: Bearer ${CRON_SECRET}`). Disparada pelo Vercel Cron
+  (`vercel.json`, dia 1 de cada mês às 06:00 UTC).
+- **Agregação:** `lib/ai/aggregate.ts` monta os totais por categoria + delta
+  vs. mês anterior a partir dos mesmos helpers de projeção do `lib/engine`
+  (nenhuma lista crua de transações é enviada ao modelo — mantém custo baixo
+  e o modelo mais preciso).
+- **Prompt:** `lib/ai/prompts.ts` (system prompt fixo + template do prompt do
+  usuário). Chamada em `lib/ai/openai.ts`, com `response_format: json_object`
+  e validação da resposta via `lib/ai/schema.ts` (zod).
+- **Armazenamento:** tabela `analises_mensais` (migrations
+  `create_analises_mensais` e `analises_mensais_allow_self_upsert`) —
+  `user_id`, `mes_referencia`, `status_geral`, `resumo`, `insights` (jsonb),
+  `recomendacoes` (jsonb), única por `(user_id, mes_referencia)`. RLS: usuário
+  autenticado pode `select`/`insert`/`update` apenas a própria linha (usada
+  pelo fluxo sob demanda); o job de cron escreve via `lib/supabase/admin.ts`
+  (service role, ignora RLS) para todos os usuários.
+- **UI:** `components/dashboard/AnaliseMensalSection.tsx` (client component),
+  renderizado em `app/(auth)/dashboard/page.tsx` quando `totalReceitas > 0`.
+  Mostra o CTA de análise quando não há resultado do mês, ou
+  `components/dashboard/AnaliseMensalCard.tsx` com o resultado.
+- **Custo:** ~US$0,0015 por usuário/mês com `gpt-4o-mini`.
 
 ---
 

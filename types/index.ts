@@ -136,3 +136,24 @@ export interface ProjecaoMensal {
   economia: number
   status: StatusMes | null
 }
+
+export interface AnaliseInsight {
+  titulo: string
+  descricao: string
+}
+
+export interface AnaliseRecomendacao {
+  acao: string
+  impacto_estimado: string | null
+}
+
+export interface AnaliseMensal {
+  id: string
+  user_id: string
+  mes_referencia: string
+  status_geral: 'bom' | 'atencao' | 'critico'
+  resumo: string
+  insights: AnaliseInsight[]
+  recomendacoes: AnaliseRecomendacao[]
+  created_at: string
+}

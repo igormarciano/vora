@@ -4,6 +4,7 @@ import { CardGastos } from '@/components/dashboard/CardGastos'
 import { CardEconomia } from '@/components/dashboard/CardEconomia'
 import { CardStatus } from '@/components/dashboard/CardStatus'
 import { DashboardCharts } from '@/components/dashboard/DashboardCharts'
+import { AnaliseMensalSection } from '@/components/dashboard/AnaliseMensalSection'
 import {
   calcularGastosFixos,
   calcularGastosVariaveis,
@@ -29,13 +30,14 @@ export default async function DashboardPage() {
   // projeção dos próximos meses (Change Request 001, item 1) — os mesmos
   // helpers de "no duplication" usados em /gastos e /investimentos calculam,
   // a partir desses dados, o que se repete (recorrências e parcelas) em cada mês.
-  const [{ data: receitasTodas }, { data: gastosFixosTodos }, { data: gastosVariaveisTodos }, { data: investimentosTodos }, { data: profile }] =
+  const [{ data: receitasTodas }, { data: gastosFixosTodos }, { data: gastosVariaveisTodos }, { data: investimentosTodos }, { data: profile }, { data: analiseMensal }] =
     await Promise.all([
       supabase.from('receitas').select('*').eq('user_id', user.id),
       supabase.from('gastos_fixos').select('*').eq('user_id', user.id),
       supabase.from('gastos_variaveis').select('*').eq('user_id', user.id),
       supabase.from('investimentos').select('*').eq('user_id', user.id),
       supabase.from('profiles').select('*').eq('id', user.id).single(),
+      supabase.from('analises_mensais').select('*').eq('user_id', user.id).eq('mes_referencia', mesRef).maybeSingle(),
     ])
 
   const receitas = receitasTodas ?? []
@@ -156,6 +158,11 @@ export default async function DashboardPage() {
         <CardEconomia economia={economia} meta={meta} />
         <CardStatus status={status} />
       </div>
+
+      {/* Análise mensal por IA (Fase 1 do plano de IA) — gerada automaticamente
+          pelo job de cron mensal (ver app/api/cron/analise-mensal) ou sob
+          demanda pelo próprio usuário (ver app/(auth)/dashboard/actions.ts). */}
+      {totalReceitas > 0 && <AnaliseMensalSection analiseInicial={analiseMensal} />}
 
       {/* Gráficos da Visão Geral (Change Request 001, item 1) — mantêm o foco em
           projeção futura, sem transformar a tela em painel histórico. */}
