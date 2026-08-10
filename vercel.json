@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/analise-mensal",
       "schedule": "0 6 1 * *"
+    },
+    {
+      "path": "/api/cron/keep-alive",
+      "schedule": "0 6 * * *"
     }
   ]
 }
