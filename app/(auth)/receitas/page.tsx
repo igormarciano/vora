@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getMesReferencia } from '@/lib/engine'
+import { getMesReferencia, projetarReceitasRecorrentes } from '@/lib/engine'
 import { ReceitasClient } from '@/components/receitas/ReceitasClient'
 
 export default async function ReceitasPage() {
@@ -10,12 +10,27 @@ export default async function ReceitasPage() {
 
   const mes = getMesReferencia()
 
-  const { data: receitas } = await supabase
-    .from('receitas')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('mes_referencia', mes)
-    .order('created_at', { ascending: false })
+  const [{ data: receitasDoMes }, { data: recorrentesAnteriores }] = await Promise.all([
+    supabase
+      .from('receitas')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('mes_referencia', mes)
+      .order('created_at', { ascending: false }),
+    // Receitas recorrentes lançadas em meses anteriores: projetadas para o mês atual,
+    // igual ao Dashboard e a /gastos (sem isso a lista fica vazia mesmo com receita no total).
+    supabase
+      .from('receitas')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('recorrente', true)
+      .lt('mes_referencia', mes),
+  ])
 
-  return <ReceitasClient receitas={receitas ?? []} />
+  const receitas = [
+    ...(receitasDoMes ?? []),
+    ...projetarReceitasRecorrentes(recorrentesAnteriores ?? [], mes),
+  ].sort((a, b) => b.created_at.localeCompare(a.created_at))
+
+  return <ReceitasClient receitas={receitas} />
 }
