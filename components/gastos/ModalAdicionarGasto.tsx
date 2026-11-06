@@ -49,7 +49,7 @@ export function ModalAdicionarGasto({ cartoes, customCategories = [], defaultTip
       {variant === 'primary' ? (
         <button
           onClick={() => setOpen(true)}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-medium text-[15px] text-white transition-opacity hover:opacity-90 shadow-sm"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-[14px] text-white transition-opacity hover:opacity-90 shadow-sm"
           style={{ background: 'linear-gradient(135deg, #57cc99, #38a3a5)' }}
         >
           <Plus size={18} /><span>{label}</span>

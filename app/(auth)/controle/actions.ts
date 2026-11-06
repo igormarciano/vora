@@ -27,6 +27,8 @@ export async function criarReceita(data: {
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   revalidatePath('/dashboard')
   return {}
 }
@@ -47,6 +49,8 @@ export async function editarReceita(id: string, data: {
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   revalidatePath('/dashboard')
   return {}
 }
@@ -60,6 +64,8 @@ export async function deletarReceita(id: string) {
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   revalidatePath('/dashboard')
   return {}
 }
@@ -73,7 +79,7 @@ export async function criarGastoFixo(data: {
   vencimento?: number
   recorrente: boolean
   duracao_meses?: number
-  vinculado_cartao_id?: string
+  vinculado_cartao_id?: string | null
   person_type?: 'PF' | 'PJ'
   description?: string
   is_paid?: boolean
@@ -94,6 +100,8 @@ export async function criarGastoFixo(data: {
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   revalidatePath('/dashboard')
   return {}
 }
@@ -105,7 +113,7 @@ export async function editarGastoFixo(id: string, data: {
   vencimento?: number
   recorrente: boolean
   duracao_meses?: number
-  vinculado_cartao_id?: string
+  vinculado_cartao_id?: string | null
   person_type?: 'PF' | 'PJ'
   description?: string
   is_paid?: boolean
@@ -118,6 +126,8 @@ export async function editarGastoFixo(id: string, data: {
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   revalidatePath('/dashboard')
   return {}
 }
@@ -131,6 +141,8 @@ export async function alternarPagoGastoFixo(id: string, is_paid: boolean, mes_re
   if (error) return { error }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   revalidatePath('/dashboard')
   return {}
 }
@@ -144,6 +156,8 @@ export async function deletarGastoFixo(id: string) {
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   revalidatePath('/dashboard')
   return {}
 }
@@ -179,6 +193,8 @@ export async function criarGastoVariavel(data: {
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   revalidatePath('/dashboard')
   return {}
 }
@@ -204,6 +220,8 @@ export async function editarGastoVariavel(id: string, data: {
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   revalidatePath('/dashboard')
   return {}
 }
@@ -217,6 +235,8 @@ export async function alternarPagoGastoVariavel(id: string, is_paid: boolean, me
   if (error) return { error }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   revalidatePath('/dashboard')
   return {}
 }
@@ -268,6 +288,8 @@ export async function deletarGastoVariavel(id: string) {
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   revalidatePath('/dashboard')
   return {}
 }
@@ -283,6 +305,8 @@ export async function criarCartao(data: { nome: string; bandeira?: string; limit
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   return {}
 }
 
@@ -295,6 +319,8 @@ export async function editarCorCartao(id: string, color: string) {
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   return {}
 }
 
@@ -307,6 +333,8 @@ export async function deletarCartao(id: string) {
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   return {}
 }
 
@@ -321,6 +349,8 @@ export async function criarCategoriaPersonalizada(data: { emoji: string; nome: s
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   revalidatePath('/configuracoes')
   return {}
 }
@@ -334,6 +364,8 @@ export async function deletarCategoriaPersonalizada(id: string) {
   if (error) return { error: error.message }
   revalidatePath('/receitas')
   revalidatePath('/gastos')
+  revalidatePath('/cartoes', 'layout')
+  revalidatePath('/analise')
   revalidatePath('/configuracoes')
   return {}
 }

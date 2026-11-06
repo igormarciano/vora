@@ -2,12 +2,10 @@
 
 import { createContext, useContext, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
-import { toast } from 'sonner'
-import { CreditCard, Plus, ChevronDown, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
+import { CreditCard, ChevronRight, Filter } from 'lucide-react'
 import type { GastoFixo, GastoVariavel, Cartao, CustomCategory } from '@/types'
 import {
-  deletarGastoFixo, deletarGastoVariavel, criarCartao, deletarCartao, editarCorCartao,
+  deletarGastoFixo, deletarGastoVariavel,
   alternarPagoGastoFixo, alternarPagoGastoVariavel,
 } from '@/app/(auth)/controle/actions'
 import { FormGastoFixo } from '@/components/controle/FormGastoFixo'
@@ -15,7 +13,9 @@ import { FormGastoVariavel } from '@/components/controle/FormGastoVariavel'
 import { ModalDelete } from '@/components/controle/ModalDelete'
 import { ModalAdicionarGasto } from './ModalAdicionarGasto'
 import { GastoCard } from './GastoCard'
-import { formatCurrency, deslocarMesReferencia, formatarMesReferencia, corComOpacidade } from '@/lib/engine'
+import { formatCurrency, corComOpacidade } from '@/lib/engine'
+import { MonthNavigator } from '@/components/layout/MonthNavigator'
+import { Page, PageHeader, StatStrip } from '@/components/layout/Page'
 
 interface GastosClientProps {
   mes: string
@@ -31,38 +31,6 @@ interface GastosClientProps {
  */
 const MesGastosContext = createContext<string | undefined>(undefined)
 const useMesGastos = () => useContext(MesGastosContext)
-
-/** Navegação entre meses — atualiza o parâmetro `mes` na URL, recarregando os dados via server component. */
-function MonthNavigator({ mes }: { mes: string }) {
-  const router = useRouter()
-  const pathname = usePathname()
-
-  function navegar(novoMes: string) {
-    router.push(`${pathname}?mes=${novoMes}`)
-  }
-
-  return (
-    <div className="flex items-center justify-center gap-4 mb-6">
-      <button
-        onClick={() => navegar(deslocarMesReferencia(mes, -1))}
-        className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#3c4a3c] hover:bg-[#f2ede7] transition-colors"
-        aria-label="Mês anterior"
-      >
-        <ChevronLeft size={18} />
-      </button>
-      <span className="font-fraunces text-[17px] text-[#3c4a3c] capitalize min-w-[180px] text-center">
-        {formatarMesReferencia(mes)}
-      </span>
-      <button
-        onClick={() => navegar(deslocarMesReferencia(mes, 1))}
-        className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#3c4a3c] hover:bg-[#f2ede7] transition-colors"
-        aria-label="Próximo mês"
-      >
-        <ChevronRight size={18} />
-      </button>
-    </div>
-  )
-}
 
 type SubTab = 'Fixos' | 'Variáveis'
 type Agrupamento = 'padrao' | 'categoria' | 'cartao'
@@ -171,60 +139,72 @@ export function GastosClient({ mes, gastosFixos, gastosVariaveis, cartoes, custo
     return s + valor
   }, 0)
 
+  const pendente = gastosFixos.filter(g => !g.is_paid).reduce((s, g) => s + g.valor, 0)
+    + gastosVariaveis.filter(g => !g.is_paid).reduce((s, g) => s + (g.parcelado && g.valor_parcela != null ? g.valor_parcela : g.valor), 0)
+
   return (
     <MesGastosContext.Provider value={mes}>
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-2">
-        <h1 className="font-fraunces text-[32px] text-[#3c4a3c]">Gastos</h1>
+    <Page>
+      <PageHeader
+        title="Gastos"
+        description="Contas fixas e gastos do dia a dia. Parcelas e recorrências aparecem sozinhas em cada mês."
+        actions={<MonthNavigator mes={mes} />}
+      />
+
+      <div className="mb-6">
+        <StatStrip
+          items={[
+            { label: 'Total do mês', value: formatCurrency(totalFixos + totalVariaveis) },
+            { label: 'Fixos', value: formatCurrency(totalFixos) },
+            { label: 'Variáveis', value: formatCurrency(totalVariaveis) },
+            { label: 'Ainda a pagar', value: formatCurrency(pendente), tone: pendente > 0 ? undefined : 'muted' },
+          ]}
+        />
       </div>
 
-      <MonthNavigator mes={mes} />
-
-      {/* Subnavegação Fixos / Variáveis */}
-      <div className="flex gap-1 bg-[#f2ede7] rounded-xl p-1 mb-6">
-        {(['Fixos', 'Variáveis'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setSubTab(tab)}
-            className="flex-1 py-2 text-[13px] font-medium rounded-lg transition-colors"
-            style={{
-              backgroundColor: subTab === tab ? 'white' : 'transparent',
-              color: subTab === tab ? '#3c4a3c' : '#6b7280',
-              boxShadow: subTab === tab ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-            }}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* CTA primário (Change Request 003, item 4) — acima da listagem, em destaque */}
-      <div className="mb-5">
+      {/* Abas + CTA na mesma linha */}
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div className="flex gap-1 bg-[#f2ede7] rounded-xl p-1 sm:w-[280px]">
+          {(['Fixos', 'Variáveis'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setSubTab(tab)}
+              className="flex-1 py-2 text-[13px] font-medium rounded-lg transition-colors"
+              style={{
+                backgroundColor: subTab === tab ? 'white' : 'transparent',
+                color: subTab === tab ? '#3c4a3c' : '#6b7280',
+                boxShadow: subTab === tab ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              }}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
         <ModalAdicionarGasto
           cartoes={cartoes}
           customCategories={customCategories}
           defaultTipo={subTab === 'Fixos' ? 'fixo' : 'variavel'}
           variant="primary"
-          label={subTab === 'Fixos' ? 'Adicionar Gasto Fixo' : 'Adicionar Gasto'}
+          label={subTab === 'Fixos' ? 'Novo gasto fixo' : 'Novo gasto'}
           mesSelecionado={mes}
           onSuccess={() => {}}
         />
       </div>
 
       {subTab === 'Fixos' && (
-        <FixosSection gastos={gastosFixos} cartoes={cartoes} customCategories={customCategories} total={totalFixos} />
+        <FixosSection gastos={gastosFixos} cartoes={cartoes} customCategories={customCategories} />
       )}
       {subTab === 'Variáveis' && (
-        <VariaveisSection gastos={gastosVariaveis} cartoes={cartoes} customCategories={customCategories} total={totalVariaveis} />
+        <VariaveisSection gastos={gastosVariaveis} cartoes={cartoes} customCategories={customCategories} />
       )}
-    </div>
+    </Page>
     </MesGastosContext.Provider>
   )
 }
 
 // ── Fixos ─────────────────────────────────────────────────────────────────────
 
-function FixosSection({ gastos, cartoes, customCategories, total }: { gastos: GastoFixo[]; cartoes: Cartao[]; customCategories: CustomCategory[]; total: number }) {
+function FixosSection({ gastos, cartoes, customCategories }: { gastos: GastoFixo[]; cartoes: Cartao[]; customCategories: CustomCategory[] }) {
   const mes = useMesGastos()
   const [categoria, setCategoria] = useState<string | null>(null)
   const [status, setStatus] = useState<StatusFiltro>('todos')
@@ -252,8 +232,6 @@ function FixosSection({ gastos, cartoes, customCategories, total }: { gastos: Ga
 
   return (
     <div>
-      <TotalBlock label="Total em gastos fixos" value={total} />
-
       {gastos.length > 0 && (
         <FiltrosBar
           categorias={categorias}
@@ -265,7 +243,7 @@ function FixosSection({ gastos, cartoes, customCategories, total }: { gastos: Ga
         />
       )}
 
-      <div className="bg-white rounded-2xl border border-[#ece4db] px-4">
+      <div className="bg-white rounded-2xl border border-[#ece4db] px-5">
         {gastos.length === 0 ? (
           <EmptyState text="Nenhum gasto fixo cadastrado ainda." />
         ) : filtrados.length === 0 ? (
@@ -280,6 +258,7 @@ function FixosSection({ gastos, cartoes, customCategories, total }: { gastos: Ga
               sub={[
                 item.vencimento ? `Vence dia ${item.vencimento}` : null,
                 item.recorrente ? 'Recorrente' : null,
+                item.vinculado_cartao_id ? `No cartão ${cartoes.find(c => c.id === item.vinculado_cartao_id)?.nome ?? ''}`.trim() : null,
               ].filter(Boolean).join(' · ') || undefined}
               description={item.description}
               isPaid={item.is_paid}
@@ -302,9 +281,8 @@ const TIPOS_PAGAMENTO = [
   { value: 'credito', label: '💳 Crédito' },
 ]
 
-function VariaveisSection({ gastos, cartoes, customCategories, total }: { gastos: GastoVariavel[]; cartoes: Cartao[]; customCategories: CustomCategory[]; total: number }) {
+function VariaveisSection({ gastos, cartoes, customCategories }: { gastos: GastoVariavel[]; cartoes: Cartao[]; customCategories: CustomCategory[] }) {
   const [agrupamento, setAgrupamento] = useState<Agrupamento>('padrao')
-  const [showCartoes, setShowCartoes] = useState(false)
   const [categoria, setCategoria] = useState<string | null>(null)
   const [status, setStatus] = useState<StatusFiltro>('todos')
   const [pessoa, setPessoa] = useState<PessoaFiltro>('todos')
@@ -333,8 +311,6 @@ function VariaveisSection({ gastos, cartoes, customCategories, total }: { gastos
 
   return (
     <div>
-      <TotalBlock label="Total em gastos variáveis" value={total} />
-
       {/* Seletor de agrupamento */}
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <div className="flex gap-1 bg-[#f2ede7] rounded-xl p-1">
@@ -358,17 +334,15 @@ function VariaveisSection({ gastos, cartoes, customCategories, total }: { gastos
           ))}
         </div>
 
-        <button
-          onClick={() => setShowCartoes(v => !v)}
+        <Link
+          href="/cartoes"
           className="flex items-center gap-1.5 text-[12px] font-medium text-[#6b7280] hover:text-[#3c4a3c] transition-colors"
         >
           <CreditCard size={14} />
-          Gerenciar cartões
-          <ChevronDown size={14} className={`transition-transform ${showCartoes ? 'rotate-180' : ''}`} />
-        </button>
+          Ver faturas dos cartões
+          <ChevronRight size={14} />
+        </Link>
       </div>
-
-      {showCartoes && <GerenciarCartoes cartoes={cartoes} />}
 
       {gastos.length > 0 && (
         <FiltrosBar
@@ -521,168 +495,7 @@ function VariavelRow({ item, cartoes, customCategories }: { item: GastoVariavel;
   )
 }
 
-// ── Gerenciar cartões (inline, dentro de Variáveis) ───────────────────────────
-
-// Item 3.9: paleta predefinida com cores do design system Vora
-const PALETA_CARTOES = [
-  { nome: 'Sálvia', valor: '#8faf8f' },
-  { nome: 'Verde escuro', valor: '#3c4a3c' },
-  { nome: 'Verde-claro', valor: '#a5bfa5' },
-  { nome: 'Menta', valor: '#57cc99' },
-  { nome: 'Petróleo', valor: '#38a3a5' },
-  { nome: 'Areia', valor: '#d7cfc7' },
-  { nome: 'Âmbar', valor: '#f59e0b' },
-  { nome: 'Coral', valor: '#dc2626' },
-  // Change Request 003, item 2 — novas opções de personalização
-  { nome: 'Roxo', valor: '#7C3AED' },
-  { nome: 'Laranja', valor: '#F97316' },
-]
-
-function GerenciarCartoes({ cartoes }: { cartoes: Cartao[] }) {
-  const [showForm, setShowForm] = useState(false)
-  const [nome, setNome] = useState('')
-  const [color, setColor] = useState<string>(PALETA_CARTOES[0].valor)
-  const [loading, setLoading] = useState(false)
-
-  async function handleCriar(e: React.FormEvent) {
-    e.preventDefault()
-    if (!nome.trim()) return
-    setLoading(true)
-    const result = await criarCartao({ nome: nome.trim(), color })
-    setLoading(false)
-    if (result.error) { toast.error(result.error); return }
-    toast.success('Cartão adicionado!')
-    setNome('')
-    setColor(PALETA_CARTOES[0].valor)
-    setShowForm(false)
-  }
-
-  return (
-    <div className="bg-[#f9f7f4] border border-[#ece4db] rounded-2xl p-4 mb-4">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-[13px] font-medium text-[#3c4a3c]">Cartões cadastrados</span>
-        <button
-          onClick={() => setShowForm(v => !v)}
-          className="flex items-center gap-1.5 text-[12px] font-medium text-[#8faf8f] hover:text-[#4f604f] transition-colors"
-        >
-          <Plus size={14} />Novo cartão
-        </button>
-      </div>
-
-      {showForm && (
-        <form onSubmit={handleCriar} className="flex flex-col gap-3 mb-3 bg-white border border-[#ece4db] rounded-xl p-3">
-          <div className="flex gap-2">
-            <input
-              value={nome}
-              onChange={e => setNome(e.target.value)}
-              placeholder="Nome do cartão..."
-              className="flex-1 border border-[#ece4db] rounded-lg px-3 py-2 text-[14px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white"
-              autoFocus
-            />
-            <button type="submit" disabled={loading}
-              className="px-4 py-2 text-[13px] font-medium bg-[#8faf8f] text-white rounded-lg hover:opacity-90 disabled:opacity-60">
-              {loading ? '...' : 'Salvar'}
-            </button>
-            <button type="button" onClick={() => { setShowForm(false); setNome('') }}
-              className="px-3 py-2 text-[13px] text-[#6b7280] hover:text-[#3c4a3c]">
-              Cancelar
-            </button>
-          </div>
-          <PaletaCores value={color} onChange={setColor} />
-        </form>
-      )}
-
-      {cartoes.length === 0 ? (
-        <p className="text-[13px] text-[#9ca3af] text-center py-2">Nenhum cartão cadastrado ainda.</p>
-      ) : (
-        <div className="flex flex-col gap-1.5">
-          {cartoes.map(cartao => <CartaoRow key={cartao.id} cartao={cartao} />)}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function PaletaCores({ value, onChange }: { value: string; onChange: (color: string) => void }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-[12px] text-[#6b7280]">Cor do cartão</span>
-      <div className="flex gap-2 flex-wrap">
-        {PALETA_CARTOES.map(c => (
-          <button
-            key={c.valor}
-            type="button"
-            title={c.nome}
-            onClick={() => onChange(c.valor)}
-            className="w-7 h-7 rounded-full transition-transform"
-            style={{
-              backgroundColor: c.valor,
-              outline: value === c.valor ? '2px solid #3c4a3c' : 'none',
-              outlineOffset: '2px',
-              transform: value === c.valor ? 'scale(1.08)' : 'scale(1)',
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function CartaoRow({ cartao }: { cartao: Cartao }) {
-  const [editingColor, setEditingColor] = useState(false)
-  const [color, setColor] = useState(cartao.color ?? PALETA_CARTOES[0].valor)
-  const [saving, setSaving] = useState(false)
-
-  async function handlePickColor(novaCor: string) {
-    setColor(novaCor)
-    setSaving(true)
-    const result = await editarCorCartao(cartao.id, novaCor)
-    setSaving(false)
-    if (result.error) { toast.error(result.error); return }
-    setEditingColor(false)
-  }
-
-  // Change Request 003, item 3 — o cartão usa a própria cor como fundo translúcido
-  return (
-    <div
-      className="flex flex-col gap-2 rounded-lg px-3 py-2 border"
-      style={{
-        backgroundColor: corComOpacidade(color, 0.12),
-        borderColor: corComOpacidade(color, 0.28),
-      }}
-    >
-      <div className="flex items-center justify-between">
-        <Link href={`/gastos/cartoes/${cartao.id}`} className="flex items-center gap-2 text-[14px] text-[#3c4a3c] hover:text-[#4f604f] transition-colors min-w-0">
-          <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
-          <CreditCard size={15} className="text-[#6b7280] shrink-0" />
-          <span className="truncate">{cartao.nome}</span>
-        </Link>
-        <div className="flex items-center gap-1 shrink-0">
-          <button
-            onClick={() => setEditingColor(v => !v)}
-            disabled={saving}
-            className="text-[12px] text-[#8faf8f] hover:text-[#4f604f] transition-colors px-2 py-1"
-          >
-            Cor
-          </button>
-          <ModalDelete label={cartao.nome} onConfirm={() => deletarCartao(cartao.id)} />
-        </div>
-      </div>
-      {editingColor && <PaletaCores value={color} onChange={handlePickColor} />}
-    </div>
-  )
-}
-
 // ── Compartilhados ────────────────────────────────────────────────────────────
-
-function TotalBlock({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="bg-[#dce6dc] rounded-2xl px-5 py-4 mb-5 flex items-center justify-between">
-      <span className="text-[14px] text-[#4f604f] font-medium">{label}</span>
-      <span className="font-fraunces text-[20px] text-[#3c4a3c]">{formatCurrency(value)}</span>
-    </div>
-  )
-}
 
 function EmptyState({ text }: { text: string }) {
   return (

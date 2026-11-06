@@ -120,7 +120,7 @@ export default async function DashboardPage() {
   const mesAtual = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="w-full max-w-6xl px-4 sm:px-6 lg:px-10 py-6 lg:py-8">
       {/* Header */}
       <div className="mb-8">
         <p className="text-[13px] text-[#6b7280] uppercase tracking-wide mb-1 capitalize">
@@ -152,7 +152,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <CardReceita total={totalReceitas} />
         <CardGastos total={totalGastos} />
         <CardEconomia economia={economia} meta={meta} />
@@ -207,10 +207,10 @@ export default async function DashboardPage() {
               Começar configuração →
             </a>
             <a
-              href="/controle"
+              href="/gastos"
               className="text-[13px] text-[#6b7280] text-center py-1 hover:text-[#3c4a3c] transition-colors"
             >
-              Ou adicionar manualmente no Controle
+              Ou adicionar manualmente em Gastos
             </a>
           </div>
         </div>

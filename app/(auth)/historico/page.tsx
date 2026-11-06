@@ -26,7 +26,7 @@ export default async function HistoricoPage() {
     .order('mes_referencia', { ascending: false })
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="w-full max-w-6xl px-4 sm:px-6 lg:px-10 py-6 lg:py-8">
       <h1 className="font-fraunces text-[32px] text-[#3c4a3c] mb-6">Histórico</h1>
 
       {!snapshots || snapshots.length === 0 ? (
@@ -38,7 +38,7 @@ export default async function HistoricoPage() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {snapshots.map(snap => {
             const cfg = snap.status ? STATUS_CONFIG[snap.status as keyof typeof STATUS_CONFIG] : null
             return (

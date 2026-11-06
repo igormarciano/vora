@@ -33,7 +33,7 @@ export function ConfiguracoesClient({ profile, customCategories }: Configuracoes
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-8">
+    <div className="w-full max-w-2xl px-4 sm:px-6 lg:px-10 py-6 lg:py-8">
       <h1 className="font-fraunces text-[32px] text-[#3c4a3c] mb-6">Configurações</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">

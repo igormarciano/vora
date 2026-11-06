@@ -93,7 +93,7 @@ export function InvestimentosClient({ investimentos, mes, sobra, pendencia }: In
   }).filter(g => g.items.length > 0)
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="w-full max-w-6xl px-4 sm:px-6 lg:px-10 py-6 lg:py-8">
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="font-fraunces text-[32px] text-[#3c4a3c]">Investimentos</h1>
