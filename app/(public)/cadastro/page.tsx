@@ -133,6 +133,11 @@ export default function CadastroPage() {
           >
             Já tenho conta
           </button>
+          <p className="text-[12px] text-[#9ca3af] text-center leading-relaxed">
+            Ao criar a conta, você concorda com os{' '}
+            <a href="/termos" target="_blank" className="underline hover:text-[#3c4a3c]">Termos de Serviço</a> e a{' '}
+            <a href="/privacidade" target="_blank" className="underline hover:text-[#3c4a3c]">Política de Privacidade</a>.
+          </p>
         </form>
       </div>
     </div>
