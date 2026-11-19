@@ -11,7 +11,7 @@ interface ConfiguracoesClientProps {
   customCategories: CustomCategory[]
 }
 
-const inputCls = 'border border-[#ece4db] rounded-lg px-3 py-2.5 text-[15px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white transition-colors w-full'
+const inputCls = 'h-12 bg-white border border-hairline rounded-[14px] px-4 text-[16px] text-ink outline-none focus:border-brand focus:shadow-[0_0_0_4px_rgb(95_138_98/0.14)] transition w-full'
 
 export function ConfiguracoesClient({ profile, customCategories }: ConfiguracoesClientProps) {
   const [nome, setNome] = useState(profile.nome ?? '')
@@ -34,15 +34,15 @@ export function ConfiguracoesClient({ profile, customCategories }: Configuracoes
 
   return (
     <div className="w-full max-w-2xl px-4 sm:px-6 lg:px-10 py-6 lg:py-8">
-      <h1 className="font-fraunces text-[32px] text-[#3c4a3c] mb-6">Configurações</h1>
+      <h1 className="text-[32px] lg:text-[36px] font-bold tracking-[-0.025em] text-ink mb-6">Configurações</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {/* Perfil */}
-        <section className="bg-white rounded-2xl border border-[#ece4db] p-5 flex flex-col gap-4">
-          <h2 className="font-fraunces text-[18px] text-[#3c4a3c]">Perfil</h2>
+        <section className="bg-surface rounded-[20px] shadow-[var(--shadow-card)] p-5 flex flex-col gap-4">
+          <h2 className="text-[18px] font-semibold tracking-[-0.015em] text-ink">Perfil</h2>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] font-medium text-[#3c4a3c]">Nome</label>
+            <label className="text-[13px] font-medium text-ink">Nome</label>
             <input
               value={nome}
               onChange={e => setNome(e.target.value)}
@@ -53,16 +53,16 @@ export function ConfiguracoesClient({ profile, customCategories }: Configuracoes
         </section>
 
         {/* Meta financeira */}
-        <section className="bg-white rounded-2xl border border-[#ece4db] p-5 flex flex-col gap-4">
+        <section className="bg-surface rounded-[20px] shadow-[var(--shadow-card)] p-5 flex flex-col gap-4">
           <div>
-            <h2 className="font-fraunces text-[18px] text-[#3c4a3c]">Meta de economia</h2>
-            <p className="text-[13px] text-[#9ca3af] mt-1">
+            <h2 className="text-[18px] font-semibold tracking-[-0.015em] text-ink">Meta de economia</h2>
+            <p className="text-[13px] text-ink-3 mt-1">
               Percentual da renda que você quer guardar todo mês.
             </p>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] font-medium text-[#3c4a3c]">Meta (%)</label>
+            <label className="text-[13px] font-medium text-ink">Meta (%)</label>
             <div className="relative">
               <input
                 value={meta}
@@ -71,18 +71,18 @@ export function ConfiguracoesClient({ profile, customCategories }: Configuracoes
                 inputMode="decimal"
                 className={inputCls + ' pr-8'}
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[14px] text-[#9ca3af]">%</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[14px] text-ink-3">%</span>
             </div>
-            <p className="text-[12px] text-[#9ca3af]">
+            <p className="text-[12px] text-ink-3">
               Recomendado: 30%
             </p>
           </div>
 
           {/* Visualização da meta */}
           {!isNaN(parseFloat(meta)) && parseFloat(meta) > 0 && (
-            <div className="flex items-center gap-3 bg-[#f2ede7] rounded-xl px-4 py-3">
+            <div className="flex items-center gap-3 bg-fill rounded-xl px-4 py-3">
               <span className="text-[20px]">🎯</span>
-              <p className="text-[13px] text-[#3c4a3c]">
+              <p className="text-[13px] text-ink">
                 Com uma renda de <strong>R$ 5.000</strong>, sua meta seria guardar{' '}
                 <strong>{formatMeta(parseFloat(meta), 5000)}</strong> por mês.
               </p>

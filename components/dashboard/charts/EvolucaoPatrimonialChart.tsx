@@ -29,10 +29,10 @@ export function EvolucaoPatrimonialChart({ evolucao }: EvolucaoPatrimonialChartP
   }))
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-[#ece4db]">
+    <div className="bg-surface rounded-[20px] p-6 shadow-[var(--shadow-card)]">
       <div className="mb-4">
-        <h2 className="font-fraunces text-[18px] text-[#3c4a3c]">Evolução patrimonial</h2>
-        <p className="text-[13px] text-[#6b7280] mt-0.5">
+        <h2 className="text-[18px] font-semibold tracking-[-0.015em] text-ink">Evolução patrimonial</h2>
+        <p className="text-[13px] text-ink-2 mt-0.5">
           Projeção de quanto seu patrimônio pode crescer mês a mês
         </p>
       </div>

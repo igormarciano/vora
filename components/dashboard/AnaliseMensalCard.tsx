@@ -23,13 +23,13 @@ export function AnaliseMensalCard({ analise, onReanalisar, reanalisando }: Anali
 
   return (
     <div
-      className="rounded-2xl p-6 border flex flex-col gap-4"
+      className="rounded-[20px] p-6 border flex flex-col gap-4"
       style={{ backgroundColor: config.bg, borderColor: config.border }}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="text-xl">{config.emoji}</span>
-          <h2 className="font-fraunces text-[18px]" style={{ color: config.cor }}>
+          <h2 className="text-[18px] font-semibold tracking-[-0.02em] tabular" style={{ color: config.cor }}>
             Análise da Vora
           </h2>
         </div>
@@ -62,8 +62,8 @@ export function AnaliseMensalCard({ analise, onReanalisar, reanalisando }: Anali
             <div className="flex flex-col gap-3">
               {analise.insights.map((insight, i) => (
                 <div key={i} className="bg-white/60 rounded-xl p-4">
-                  <p className="text-[14px] font-medium text-[#3c4a3c] mb-1">{insight.titulo}</p>
-                  <p className="text-[13px] text-[#6b7280] leading-relaxed">{insight.descricao}</p>
+                  <p className="text-[14px] font-medium text-ink mb-1">{insight.titulo}</p>
+                  <p className="text-[13px] text-ink-2 leading-relaxed">{insight.descricao}</p>
                 </div>
               ))}
             </div>
@@ -76,12 +76,12 @@ export function AnaliseMensalCard({ analise, onReanalisar, reanalisando }: Anali
               </p>
               <ul className="flex flex-col gap-2">
                 {analise.recomendacoes.map((rec, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[13px] text-[#3c4a3c]">
+                  <li key={i} className="flex items-start gap-2 text-[13px] text-ink">
                     <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#8faf8f] shrink-0" />
                     <span>
                       {rec.acao}
                       {rec.impacto_estimado && (
-                        <span className="text-[#6b7280]"> — {rec.impacto_estimado}</span>
+                        <span className="text-ink-2"> — {rec.impacto_estimado}</span>
                       )}
                     </span>
                   </li>

@@ -6,7 +6,7 @@ import { Plus } from 'lucide-react'
 import type { CustomCategory } from '@/types'
 import { criarCategoriaPersonalizada } from '@/app/(auth)/controle/actions'
 
-const inputCls = 'border border-[#ece4db] rounded-lg px-3 py-2.5 text-[15px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white transition-colors w-full'
+const inputCls = 'h-12 bg-white border border-hairline rounded-[14px] px-4 text-[16px] text-ink outline-none focus:border-brand focus:shadow-[0_0_0_4px_rgb(95_138_98/0.14)] transition w-full'
 
 interface CategorySelectProps {
   value: string
@@ -62,7 +62,7 @@ export function CategorySelect({ value, onChange, categoriasPadrao, customCatego
 
       {!showForm ? (
         <button type="button" onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 text-[12px] font-medium text-[#8faf8f] hover:text-[#4f604f] transition-colors self-start">
+          className="flex items-center gap-1.5 text-[12px] font-medium text-brand hover:text-brand-strong transition-colors self-start">
           <Plus size={13} />Criar categoria personalizada
         </button>
       ) : (
@@ -70,13 +70,13 @@ export function CategorySelect({ value, onChange, categoriasPadrao, customCatego
           {/* Hierarquia [Emoji][Nome] — emoji compacto, nome em destaque (CR003, item 1) */}
           <div className="flex gap-2">
             <input value={emoji} onChange={e => setEmoji(e.target.value)} placeholder="🎨" maxLength={2} aria-label="Emoji"
-              className="w-11 shrink-0 border border-[#ece4db] rounded-lg px-0 py-2 text-center text-[18px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white transition-colors" />
+              className="w-11 shrink-0 border border-hairline rounded-lg px-0 py-2 text-center text-[18px] text-ink outline-none focus:border-[#8faf8f] bg-white transition-colors" />
             <input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome da categoria..." aria-label="Nome"
-              className="flex-1 min-w-0 border border-[#ece4db] rounded-lg px-3 py-2 text-[15px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white transition-colors" />
+              className="flex-1 min-w-0 border border-hairline rounded-lg px-3 py-2 text-[15px] text-ink outline-none focus:border-[#8faf8f] bg-white transition-colors" />
           </div>
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={() => { setShowForm(false); setEmoji(''); setNome('') }}
-              className="px-3 py-1.5 text-[12px] text-[#6b7280] hover:text-[#3c4a3c] transition-colors">
+              className="px-3 py-1.5 text-[12px] text-ink-2 hover:text-ink transition-colors">
               Cancelar
             </button>
             <button type="button" onClick={handleCriar} disabled={loading}

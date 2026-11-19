@@ -52,17 +52,17 @@ export function GastoCard({ nome, valor, badge, sub, description, isPaid, onTogg
   const isLong = (description?.length ?? 0) > 90
 
   return (
-    <div className="flex flex-col gap-1.5 py-3.5 border-b border-[#f2ede7] last:border-0">
+    <div className="flex flex-col gap-1.5 py-3.5 border-b border-[rgb(60_74_60/0.08)] last:border-0">
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={handleToggle}
           disabled={pending}
           title={paid ? 'Marcar como pendente' : 'Marcar como pago'}
-          className="shrink-0 w-5 h-5 rounded-md border flex items-center justify-center transition-colors disabled:opacity-60"
+          className="shrink-0 w-[22px] h-[22px] rounded-full border-[1.5px] flex items-center justify-center transition-colors disabled:opacity-60"
           style={{
-            backgroundColor: paid ? '#8faf8f' : 'white',
-            borderColor: paid ? '#8faf8f' : '#d7cfc7',
+            backgroundColor: paid ? '#5f8a62' : 'white',
+            borderColor: paid ? '#5f8a62' : '#c9cfc7',
           }}
         >
           {paid && <CheckIcon />}
@@ -71,18 +71,23 @@ export function GastoCard({ nome, valor, badge, sub, description, isPaid, onTogg
         <div className="flex-1 min-w-0">
           {destaque}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-[15px] font-medium truncate ${paid ? 'text-[#9ca3af] line-through' : 'text-[#3c4a3c]'}`}>{nome}</span>
+            <span className={`text-[15px] font-medium truncate ${paid ? 'text-ink-3 line-through' : 'text-ink'}`}>{nome}</span>
             {badge && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f2ede7] text-[#6b7280]">{badge}</span>
+              <span className="hidden sm:inline text-[11px] px-2 py-0.5 rounded-full bg-fill text-ink-2">{badge}</span>
             )}
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${paid ? 'bg-[#dce6dc] text-[#4f604f]' : 'bg-[#f9f1e4] text-[#a8772f]'}`}>
+            <span className={`hidden sm:inline text-[10px] px-2 py-0.5 rounded-full font-medium ${paid ? 'bg-brand-soft text-brand-strong' : 'bg-[#f9f1e4] text-[#a8772f]'}`}>
               {paid ? 'Pago' : 'Pendente'}
             </span>
           </div>
-          {sub && <p className="text-[12px] text-[#9ca3af] mt-0.5">{sub}</p>}
+          {(sub || badge) && (
+            <p className="text-[12px] text-ink-3 mt-0.5 truncate">
+              {badge && <span className="sm:hidden">{badge}{sub ? ' · ' : ''}</span>}
+              {sub}
+            </p>
+          )}
         </div>
-        <span className="text-[15px] font-medium text-[#3c4a3c] shrink-0">{valor}</span>
-        <div className="flex items-center gap-0.5 shrink-0">
+        <span className={`text-[15px] font-semibold tabular shrink-0 ${paid ? 'text-ink-3' : 'text-ink'}`}>{valor}</span>
+        <div className="flex items-center -mr-1.5 shrink-0">
           {editButton}
           {deleteButton}
         </div>
@@ -90,20 +95,20 @@ export function GastoCard({ nome, valor, badge, sub, description, isPaid, onTogg
 
       {description && (
         <div className="ml-8 flex flex-col gap-1">
-          <p className={`text-[13px] text-[#6b7280] ${!expanded && isLong ? 'line-clamp-1' : ''}`}>
+          <p className={`text-[13px] text-ink-2 ${!expanded && isLong ? 'line-clamp-1' : ''}`}>
             {description}
           </p>
           <div className="flex items-center gap-3">
             {isLong && (
               <button onClick={() => setExpanded(v => !v)}
-                className="flex items-center gap-1 text-[12px] text-[#8faf8f] hover:text-[#4f604f] transition-colors">
+                className="flex items-center gap-1 text-[12px] text-brand hover:text-brand-strong transition-colors">
                 {expanded ? 'Ver menos' : 'Ver mais'}
                 <ChevronDown size={13} className={`transition-transform ${expanded ? 'rotate-180' : ''}`} />
               </button>
             )}
             {link && (
               <a href={link} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1 text-[12px] text-[#8faf8f] hover:text-[#4f604f] transition-colors truncate max-w-[220px]">
+                className="flex items-center gap-1 text-[12px] text-brand hover:text-brand-strong transition-colors truncate max-w-[220px]">
                 <ExternalLink size={12} />
                 <span className="truncate">{link}</span>
               </a>

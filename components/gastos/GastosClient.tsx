@@ -57,7 +57,7 @@ function ordenarGastos<T extends { nome: string; valor: number; created_at: stri
   }
 }
 
-const selectCls = 'border border-[#ece4db] rounded-lg px-2.5 py-1.5 text-[12px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white transition-colors'
+const selectCls = 'h-9 border border-hairline rounded-full pl-3.5 pr-8 text-[14px] text-ink outline-none focus:border-brand bg-white transition-colors appearance-none bg-[url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%238a918a%27 stroke-width=%272.5%27%3E%3Cpath d=%27m6 9 6 6 6-6%27/%3E%3C/svg%3E")] bg-no-repeat bg-[right_12px_center]'
 
 interface FiltrosBarProps {
   categorias: string[]
@@ -82,10 +82,10 @@ function FiltrosBar({
   onLimpar, ativos,
 }: FiltrosBarProps) {
   return (
-    <div className="flex flex-wrap items-center gap-2 mb-4">
+    <div className="flex items-center gap-2 mb-4 overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap [scrollbar-width:none] [&>*]:shrink-0">
       <div className="flex items-center gap-1.5">
-        <Filter size={14} className="text-[#6b7280]" />
-        <span className="text-[12px] font-medium text-[#3c4a3c]">Filtros</span>
+        <Filter size={14} className="text-ink-2" />
+        <span className="text-[12px] font-medium text-ink">Filtros</span>
         {ativos > 0 && (
           <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#8faf8f] text-white text-[10px] font-semibold">
             {ativos}
@@ -122,7 +122,7 @@ function FiltrosBar({
       </select>
 
       {ativos > 0 && (
-        <button onClick={onLimpar} className="text-[12px] font-medium text-[#8faf8f] hover:text-[#4f604f] transition-colors">
+        <button onClick={onLimpar} className="text-[12px] font-medium text-brand hover:text-brand-strong transition-colors">
           Limpar filtros
         </button>
       )}
@@ -164,7 +164,7 @@ export function GastosClient({ mes, gastosFixos, gastosVariaveis, cartoes, custo
 
       {/* Abas + CTA na mesma linha */}
       <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <div className="flex gap-1 bg-[#f2ede7] rounded-xl p-1 sm:w-[280px]">
+        <div className="flex gap-1 bg-fill rounded-xl p-1 sm:w-[280px]">
           {(['Fixos', 'Variáveis'] as const).map(tab => (
             <button
               key={tab}
@@ -243,7 +243,7 @@ function FixosSection({ gastos, cartoes, customCategories }: { gastos: GastoFixo
         />
       )}
 
-      <div className="bg-white rounded-2xl border border-[#ece4db] px-5">
+      <div className="bg-surface rounded-[20px] shadow-[var(--shadow-card)] px-5">
         {gastos.length === 0 ? (
           <EmptyState text="Nenhum gasto fixo cadastrado ainda." />
         ) : filtrados.length === 0 ? (
@@ -313,7 +313,7 @@ function VariaveisSection({ gastos, cartoes, customCategories }: { gastos: Gasto
     <div>
       {/* Seletor de agrupamento */}
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-        <div className="flex gap-1 bg-[#f2ede7] rounded-xl p-1">
+        <div className="flex gap-1 bg-fill rounded-xl p-1">
           {([
             { key: 'padrao', label: 'Padrão' },
             { key: 'categoria', label: 'Por categoria' },
@@ -336,7 +336,7 @@ function VariaveisSection({ gastos, cartoes, customCategories }: { gastos: Gasto
 
         <Link
           href="/cartoes"
-          className="flex items-center gap-1.5 text-[12px] font-medium text-[#6b7280] hover:text-[#3c4a3c] transition-colors"
+          className="flex items-center gap-1.5 text-[12px] font-medium text-ink-2 hover:text-ink transition-colors"
         >
           <CreditCard size={14} />
           Ver faturas dos cartões
@@ -365,7 +365,7 @@ function VariaveisSection({ gastos, cartoes, customCategories }: { gastos: Gasto
 
 function ListaPadrao({ gastos, cartoes, customCategories }: { gastos: GastoVariavel[]; cartoes: Cartao[]; customCategories: CustomCategory[] }) {
   return (
-    <div className="bg-white rounded-2xl border border-[#ece4db] px-4">
+    <div className="bg-surface rounded-[20px] shadow-[var(--shadow-card)] px-4">
       {gastos.length === 0 ? (
         <EmptyState text="Nenhum gasto variável cadastrado ainda." />
       ) : (
@@ -388,7 +388,7 @@ function ListaPorCategoria({ gastos, cartoes, customCategories }: { gastos: Gast
 
   if (gastos.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-[#ece4db] px-4">
+      <div className="bg-surface rounded-[20px] shadow-[var(--shadow-card)] px-4">
         <EmptyState text="Nenhum gasto variável cadastrado ainda." />
       </div>
     )
@@ -401,10 +401,10 @@ function ListaPorCategoria({ gastos, cartoes, customCategories }: { gastos: Gast
         return (
           <div key={categoria}>
             <div className="flex items-center justify-between mb-2 px-1">
-              <span className="text-[13px] font-medium text-[#3c4a3c]">{categoria}</span>
-              <span className="text-[13px] text-[#6b7280]">{formatCurrency(subtotal)}</span>
+              <span className="text-[13px] font-medium text-ink">{categoria}</span>
+              <span className="text-[13px] text-ink-2">{formatCurrency(subtotal)}</span>
             </div>
-            <div className="bg-white rounded-2xl border border-[#ece4db] px-4">
+            <div className="bg-surface rounded-[20px] shadow-[var(--shadow-card)] px-4">
               {items.map(item => <VariavelRow key={item.id} item={item} cartoes={cartoes} customCategories={customCategories} />)}
             </div>
           </div>
@@ -429,7 +429,7 @@ function ListaPorCartao({ gastos, cartoes, customCategories }: { gastos: GastoVa
 
   if (gastos.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-[#ece4db] px-4">
+      <div className="bg-surface rounded-[20px] shadow-[var(--shadow-card)] px-4">
         <EmptyState text="Nenhum gasto variável cadastrado ainda." />
       </div>
     )
@@ -442,15 +442,15 @@ function ListaPorCartao({ gastos, cartoes, customCategories }: { gastos: GastoVa
         return (
           <div key={cartao?.id ?? 'outros'}>
             <div className="flex items-center justify-between mb-2 px-1">
-              <span className="flex items-center gap-2 text-[13px] font-medium text-[#3c4a3c]">
+              <span className="flex items-center gap-2 text-[13px] font-medium text-ink">
                 {cartao?.color && <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cartao.color }} />}
-                <CreditCard size={14} className="text-[#6b7280]" />
+                <CreditCard size={14} className="text-ink-2" />
                 {cartao ? cartao.nome : 'Outros (sem cartão)'}
               </span>
-              <span className="text-[13px] text-[#6b7280]">Subtotal: {formatCurrency(subtotal)}</span>
+              <span className="text-[13px] text-ink-2">Subtotal: {formatCurrency(subtotal)}</span>
             </div>
             <div
-              className="rounded-2xl border px-4"
+              className="rounded-[20px] border px-4"
               style={cartao?.color
                 ? { backgroundColor: corComOpacidade(cartao.color, 0.10), borderColor: corComOpacidade(cartao.color, 0.25) }
                 : { backgroundColor: 'white', borderColor: '#ece4db' }}
@@ -474,7 +474,7 @@ function VariavelRow({ item, cartoes, customCategories }: { item: GastoVariavel;
   // Item 3.8: em compras parceladas, a parcela do mês é o valor em destaque;
   // o total da compra aparece como informação secundária.
   const destaque = parcela ? (
-    <p className="text-[12px] text-[#9ca3af] -mt-0.5">
+    <p className="text-[12px] text-ink-3 -mt-0.5">
       {item.parcela_atual}/{item.total_parcelas}x · total {formatCurrency(item.valor)}
     </p>
   ) : undefined
@@ -499,6 +499,6 @@ function VariavelRow({ item, cartoes, customCategories }: { item: GastoVariavel;
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <p className="text-[14px] text-[#9ca3af] py-6 text-center">{text}</p>
+    <p className="text-[14px] text-ink-3 py-6 text-center">{text}</p>
   )
 }

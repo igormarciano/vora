@@ -54,8 +54,8 @@ export function CartoesClient({ mes, resumo }: { mes: string; resumo: ResumoCart
             <MonthNavigator mes={mes} />
             <button
               onClick={() => setShowForm(v => !v)}
-              className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-medium text-white shadow-sm hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg, #57cc99, #38a3a5)' }}
+              className="hidden sm:flex items-center gap-2 h-11 px-5 rounded-full text-[14px] font-medium text-white shadow-sm hover:opacity-90"
+              style={{ background: '#3c4a3c' }}
             >
               <Plus size={17} /> Novo cartão
             </button>
@@ -66,7 +66,7 @@ export function CartoesClient({ mes, resumo }: { mes: string; resumo: ResumoCart
       <button
         onClick={() => setShowForm(v => !v)}
         className="sm:hidden w-full mb-4 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-medium text-white"
-        style={{ background: 'linear-gradient(135deg, #57cc99, #38a3a5)' }}
+        style={{ background: '#3c4a3c' }}
       >
         <Plus size={17} /> Novo cartão
       </button>
@@ -88,8 +88,8 @@ export function CartoesClient({ mes, resumo }: { mes: string; resumo: ResumoCart
       {resumo.length === 0 ? (
         <Panel className="px-6 py-12 text-center">
           <CreditCard size={28} className="mx-auto text-[#a5bfa5] mb-3" />
-          <p className="font-fraunces text-[18px] text-[#3c4a3c] mb-1">Nenhum cartão ainda</p>
-          <p className="text-[14px] text-[#9ca3af]">Cadastre seus cartões para ver a fatura de cada um, incluindo contas fixas vinculadas.</p>
+          <p className="text-[18px] font-semibold tracking-[-0.015em] text-ink mb-1">Nenhum cartão ainda</p>
+          <p className="text-[14px] text-ink-3">Cadastre seus cartões para ver a fatura de cada um, incluindo contas fixas vinculadas.</p>
         </Panel>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -115,7 +115,7 @@ function CartaoTile({ resumo, query }: { resumo: ResumoCartao; query: string }) 
 
   return (
     <div
-      className="rounded-2xl border p-5 flex flex-col gap-4"
+      className="rounded-[20px] border p-5 flex flex-col gap-4"
       style={{ backgroundColor: corComOpacidade(cor, 0.08), borderColor: corComOpacidade(cor, 0.28) }}
     >
       <div className="flex items-center gap-3">
@@ -123,14 +123,14 @@ function CartaoTile({ resumo, query }: { resumo: ResumoCartao; query: string }) 
           <CreditCard size={18} className="text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[15px] font-medium text-[#3c4a3c] truncate">{cartao.nome}</p>
-          <p className="text-[12px] text-[#6b7280]">
+          <p className="text-[15px] font-medium text-ink truncate">{cartao.nome}</p>
+          <p className="text-[12px] text-ink-2">
             {cartao.limite ? `Limite ${formatCurrency(cartao.limite)}` : 'Sem limite definido'}
           </p>
         </div>
         <button
           onClick={() => setEditandoCor(v => !v)}
-          className="p-1.5 rounded text-[#6b7280] hover:text-[#3c4a3c] hover:bg-white/60"
+          className="p-1.5 rounded text-ink-2 hover:text-ink hover:bg-white/60"
           title="Trocar cor"
         >
           <Palette size={15} />
@@ -141,18 +141,18 @@ function CartaoTile({ resumo, query }: { resumo: ResumoCartao; query: string }) 
       {editandoCor && <PaletaCores value={cor} onChange={trocarCor} />}
 
       <div>
-        <p className="text-[11px] font-medium text-[#6b7280] uppercase tracking-wide">Fatura do mês</p>
-        <p className="font-fraunces text-[26px] text-[#3c4a3c] leading-tight">{formatCurrency(resumo.total)}</p>
+        <p className="text-[11px] font-medium text-ink-2 uppercase tracking-wide">Fatura do mês</p>
+        <p className="text-[26px] font-semibold tracking-[-0.02em] tabular text-ink leading-tight">{formatCurrency(resumo.total)}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 text-[13px]">
         <div>
-          <p className="text-[#6b7280]">Contas fixas</p>
-          <p className="font-medium text-[#3c4a3c]">{formatCurrency(resumo.totalFixos)} <span className="text-[#9ca3af] font-normal">· {resumo.qtdFixos}</span></p>
+          <p className="text-ink-2">Contas fixas</p>
+          <p className="font-medium text-ink">{formatCurrency(resumo.totalFixos)} <span className="text-ink-3 font-normal">· {resumo.qtdFixos}</span></p>
         </div>
         <div>
-          <p className="text-[#6b7280]">Compras e parcelas</p>
-          <p className="font-medium text-[#3c4a3c]">{formatCurrency(resumo.totalCompras)} <span className="text-[#9ca3af] font-normal">· {resumo.qtdCompras}</span></p>
+          <p className="text-ink-2">Compras e parcelas</p>
+          <p className="font-medium text-ink">{formatCurrency(resumo.totalCompras)} <span className="text-ink-3 font-normal">· {resumo.qtdCompras}</span></p>
         </div>
       </div>
 
@@ -161,13 +161,13 @@ function CartaoTile({ resumo, query }: { resumo: ResumoCartao; query: string }) 
           <div className="h-1.5 rounded-full bg-white/80 overflow-hidden">
             <div className="h-full rounded-full" style={{ width: `${usoLimite * 100}%`, backgroundColor: usoLimite > 0.85 ? '#dc2626' : cor }} />
           </div>
-          <p className="text-[11px] text-[#6b7280] mt-1">{Math.round(usoLimite * 100)}% do limite comprometido (fatura + parcelas futuras)</p>
+          <p className="text-[11px] text-ink-2 mt-1">{Math.round(usoLimite * 100)}% do limite comprometido (fatura + parcelas futuras)</p>
         </div>
       )}
 
       <Link
         href={`/cartoes/${cartao.id}${query}`}
-        className="mt-auto flex items-center justify-between text-[13px] font-medium text-[#4f604f] hover:text-[#3c4a3c] pt-3 border-t"
+        className="mt-auto flex items-center justify-between text-[13px] font-medium text-brand-strong hover:text-ink pt-3 border-t"
         style={{ borderColor: corComOpacidade(cor, 0.2) }}
       >
         Ver fatura completa <ChevronRight size={15} />
@@ -198,27 +198,27 @@ function NovoCartaoForm({ onDone }: { onDone: () => void }) {
       <form onSubmit={handleCriar} className="flex flex-col gap-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="flex flex-col gap-1.5">
-            <span className="text-[12px] text-[#6b7280]">Nome do cartão</span>
+            <span className="text-[12px] text-ink-2">Nome do cartão</span>
             <input
               value={nome}
               onChange={e => setNome(e.target.value)}
               placeholder="Ex: Nubank, Itaú Black..."
-              className="border border-[#ece4db] rounded-lg px-3 py-2 text-[14px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white"
+              className="border border-hairline rounded-lg px-3 py-2 text-[14px] text-ink outline-none focus:border-[#8faf8f] bg-white"
               autoFocus
             />
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="text-[12px] text-[#6b7280]">Limite (opcional)</span>
-            <CurrencyInput value={limite} onValueChange={setLimite} placeholder="R$ 0,00" className="border border-[#ece4db] rounded-lg px-3 py-2 text-[14px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white w-full" />
+            <span className="text-[12px] text-ink-2">Limite (opcional)</span>
+            <CurrencyInput value={limite} onValueChange={setLimite} placeholder="R$ 0,00" className="border border-hairline rounded-lg px-3 py-2 text-[14px] text-ink outline-none focus:border-[#8faf8f] bg-white w-full" />
           </label>
         </div>
         <PaletaCores value={color} onChange={setColor} />
         <div className="flex gap-2 justify-end">
-          <button type="button" onClick={onDone} className="px-3 py-2 text-[13px] text-[#6b7280] hover:text-[#3c4a3c]">
+          <button type="button" onClick={onDone} className="px-3 py-2 text-[13px] text-ink-2 hover:text-ink">
             Cancelar
           </button>
           <button type="submit" disabled={loading}
-            className="px-4 py-2 text-[13px] font-medium bg-[#8faf8f] text-white rounded-lg hover:opacity-90 disabled:opacity-60">
+            className="h-10 px-5 text-[14px] font-medium bg-brand-strong text-white rounded-full hover:bg-[#2f3b2f] disabled:opacity-60">
             {loading ? 'Salvando...' : 'Salvar cartão'}
           </button>
         </div>
@@ -230,7 +230,7 @@ function NovoCartaoForm({ onDone }: { onDone: () => void }) {
 function PaletaCores({ value, onChange }: { value: string; onChange: (color: string) => void }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-[12px] text-[#6b7280]">Cor do cartão</span>
+      <span className="text-[12px] text-ink-2">Cor do cartão</span>
       <div className="flex gap-2 flex-wrap">
         {PALETA_CARTOES.map(c => (
           <button

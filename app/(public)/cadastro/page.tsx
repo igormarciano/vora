@@ -1,11 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { ChevronLeft, MailCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { PasswordInput } from '@/components/ui/PasswordInput'
+import { AuthShell, AuthHeading } from '@/components/auth/AuthShell'
+import { GoogleButton } from '@/components/auth/GoogleButton'
+import { Button, Field, PasswordField, TextInput } from '@/components/vora/ui'
 
 export default function CadastroPage() {
   const router = useRouter()
@@ -13,6 +16,7 @@ export default function CadastroPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [aguardandoEmail, setAguardandoEmail] = useState(false)
 
   async function handleCadastro(e: React.FormEvent) {
     e.preventDefault()
@@ -23,123 +27,69 @@ export default function CadastroPage() {
       password,
       options: {
         data: { nome },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/auth/callback?next=/onboarding`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/auth/callback?next=/setup`,
       },
     })
     setLoading(false)
     if (error) {
-      toast.error(error.message)
+      toast.error(error.message.includes('already') ? 'Esse e-mail já tem conta. Tente entrar.' : 'Não foi possível criar a conta. Tente de novo.')
       return
     }
-    // Se session for null, o Supabase exige confirmação de email
     if (!data.session) {
-      toast.success('Conta criada! Verifique seu email para confirmar.')
-      router.push('/login')
+      setAguardandoEmail(true)
       return
     }
-    // Session imediata (confirmação desativada no projeto)
-    toast.success('Conta criada! Bem-vinda à Vora.')
     router.refresh()
-    router.push('/onboarding')
+    router.push('/setup')
+  }
+
+  if (aguardandoEmail) {
+    return (
+      <AuthShell illustration="/images/onboarding1-hero.svg">
+        <div className="w-14 h-14 rounded-[18px] bg-brand-soft text-brand-strong flex items-center justify-center mb-5">
+          <MailCheck size={26} />
+        </div>
+        <AuthHeading
+          title="Confirme seu e-mail"
+          subtitle={<>Enviamos um link para <strong className="text-ink">{email}</strong>. Abra ele no celular ou no computador para ativar sua conta e montar seu mês.</>}
+        />
+        <p className="text-[13px] text-ink-3">Não chegou em 2 minutos? Veja o spam ou confira se o e-mail está certo.</p>
+        <Button variant="ghost" size="lg" block className="mt-6" onClick={() => setAguardandoEmail(false)}>Usar outro e-mail</Button>
+      </AuthShell>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-[#f2ede7] flex flex-col relative overflow-hidden">
-      {/* Logo */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
-        <Image
-          src="/images/login-logo-icon.svg"
-          alt="Vora logo icon"
-          width={28}
-          height={28}
-          className="object-contain"
-        />
-        <Image
-          src="/images/vora-wordmark.svg"
-          alt="VORA"
-          width={80}
-          height={22}
-          className="object-contain"
-        />
-      </div>
+    <AuthShell illustration="/images/onboarding1-hero.svg">
+      <Link href="/login" className="lg:hidden -ml-2 mb-4 inline-flex items-center gap-0.5 h-9 pr-3 pl-1 rounded-full text-[15px] font-medium text-brand hover:bg-fill">
+        <ChevronLeft size={20} /> Voltar
+      </Link>
+      <AuthHeading title="Crie sua conta" subtitle="Leva um minuto. Depois a Vora monta seu mês com você." />
 
-      {/* Hero illustration */}
-      <div className="flex-1 flex items-center justify-center pt-20 pb-4">
-        <Image
-          src="/images/onboarding1-hero.svg"
-          alt="Ilustração Vora"
-          width={250}
-          height={250}
-          className="object-contain"
-          priority
-        />
-      </div>
-
-      {/* Bottom content */}
-      <div className="bg-[#f2ede7] px-[30px] pt-[40px] pb-[48px] flex flex-col gap-[24px]">
-        <div className="flex flex-col gap-[8px]">
-          <h1 className="font-fraunces text-[32px] text-[#3c4a3c] leading-tight">
-            Crie sua conta.
-          </h1>
-          <p className="text-[16px] text-[#3c4a3c] leading-normal">
-            É rápido. Prometo.
-          </p>
-        </div>
-
-        <form onSubmit={handleCadastro} className="flex flex-col gap-[12px]">
-          <div className="flex flex-col gap-[6px]">
-            <label className="text-[14px] text-[#3c4a3c] font-medium">Nome</label>
-            <input
-              type="text"
-              value={nome}
-              onChange={e => setNome(e.target.value)}
-              placeholder="Como posso te chamar?"
-              required
-              className="w-full border border-[#ece4db] bg-white text-[#3c4a3c] px-4 py-3 text-[16px] outline-none focus:border-[#8faf8f] transition-colors"
-            />
-          </div>
-          <div className="flex flex-col gap-[6px]">
-            <label className="text-[14px] text-[#3c4a3c] font-medium">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="seu@email.com"
-              required
-              className="w-full border border-[#ece4db] bg-white text-[#3c4a3c] px-4 py-3 text-[16px] outline-none focus:border-[#8faf8f] transition-colors"
-            />
-          </div>
-          <div className="flex flex-col gap-[6px]">
-            <label className="text-[14px] text-[#3c4a3c] font-medium">Senha</label>
-            <PasswordInput
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Mínimo 6 caracteres"
-              minLength={6}
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#8faf8f] text-[#f9f7f4] font-fraunces text-[16px] py-[12px] px-[26px] text-center transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-60 mt-1"
-          >
-            {loading ? 'Criando conta...' : 'Criar conta'}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push('/login')}
-            className="text-[14px] text-[#6b7280] text-center underline"
-          >
-            Já tenho conta
-          </button>
-          <p className="text-[12px] text-[#9ca3af] text-center leading-relaxed">
-            Ao criar a conta, você concorda com os{' '}
-            <a href="/termos" target="_blank" className="underline hover:text-[#3c4a3c]">Termos de Serviço</a> e a{' '}
-            <a href="/privacidade" target="_blank" className="underline hover:text-[#3c4a3c]">Política de Privacidade</a>.
-          </p>
+      <div className="flex flex-col gap-4">
+        <GoogleButton label="Criar conta com Google" />
+        <form onSubmit={handleCadastro} className="flex flex-col gap-4">
+          <Field label="Como podemos te chamar?">
+            <TextInput autoComplete="given-name" value={nome} onChange={e => setNome(e.target.value)} placeholder="Seu nome" required />
+          </Field>
+          <Field label="E-mail">
+            <TextInput type="email" autoComplete="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="voce@email.com" required />
+          </Field>
+          <Field label="Senha" hint="Mínimo de 6 caracteres">
+            <PasswordField autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Crie uma senha" minLength={6} required />
+          </Field>
+          <Button type="submit" size="lg" block loading={loading} className="mt-2">Criar conta</Button>
         </form>
       </div>
-    </div>
+
+      <p className="mt-6 text-center text-[12px] text-ink-3 leading-relaxed">
+        Ao criar a conta, você concorda com os{' '}
+        <Link href="/termos" target="_blank" className="underline">Termos de Serviço</Link> e a{' '}
+        <Link href="/privacidade" target="_blank" className="underline">Política de Privacidade</Link>.
+      </p>
+      <p className="mt-6 text-center text-[14px] text-ink-2">
+        Já tem conta? <Link href="/login" className="font-semibold text-brand-strong hover:underline">Entrar</Link>
+      </p>
+    </AuthShell>
   )
 }

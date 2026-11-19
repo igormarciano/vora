@@ -17,7 +17,7 @@ const CATEGORIAS = [
 
 type CategoriaValue = typeof CATEGORIAS[number]['value']
 
-const inputCls = 'border border-[#ece4db] rounded-lg px-3 py-2.5 text-[15px] text-[#3c4a3c] outline-none focus:border-[#8faf8f] bg-white transition-colors w-full'
+const inputCls = 'h-12 bg-white border border-hairline rounded-[14px] px-4 text-[16px] text-ink outline-none focus:border-brand focus:shadow-[0_0_0_4px_rgb(95_138_98/0.14)] transition w-full'
 
 interface ModalInvestirSobraProps {
   open: boolean
@@ -73,15 +73,15 @@ export function ModalInvestirSobra({ open, onOpenChange, disponivel, mes }: Moda
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/30" onClick={handleClose} />
-      <div className="relative bg-white rounded-2xl p-6 shadow-lg max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in" onClick={handleClose} />
+      <div className="relative bg-canvas sm:bg-white w-full sm:max-w-md sm:mx-4 rounded-t-[28px] sm:rounded-[24px] p-6 pb-[max(env(safe-area-inset-bottom),24px)] sm:pb-6 shadow-[var(--shadow-float)] max-h-[92dvh] overflow-y-auto animate-in slide-in-from-bottom sm:slide-in-from-bottom-4 sm:fade-in duration-300">
         <div className="flex items-center gap-2 mb-1">
-          <Sprout size={20} className="text-[#8faf8f]" />
-          <h3 className="font-fraunces text-[22px] text-[#3c4a3c]">Investir sobra do mês</h3>
+          <Sprout size={20} className="text-brand" />
+          <h3 className="text-[22px] font-bold tracking-[-0.02em] text-ink">Investir sobra do mês</h3>
         </div>
-        <p className="text-[13px] text-[#6b7280] mb-5">
-          Você tem <span className="font-medium text-[#3c4a3c]">{formatCurrency(disponivel)}</span> de sobra disponível este mês. Escolha quanto e onde investir.
+        <p className="text-[13px] text-ink-2 mb-5">
+          Você tem <span className="font-medium text-ink">{formatCurrency(disponivel)}</span> de sobra disponível este mês. Escolha quanto e onde investir.
         </p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Field label="Nome do investimento">
@@ -105,11 +105,11 @@ export function ModalInvestirSobra({ open, onOpenChange, disponivel, mes }: Moda
 
           <div className="flex gap-3 justify-end pt-2">
             <button type="button" onClick={handleClose}
-              className="px-4 py-2 text-[14px] text-[#6b7280] hover:text-[#3c4a3c] transition-colors">
+              className="px-4 py-2 text-[14px] text-ink-2 hover:text-ink transition-colors">
               Cancelar
             </button>
             <button type="submit" disabled={loading}
-              className="px-5 py-2.5 text-[14px] font-medium bg-[#8faf8f] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60">
+              className="h-11 px-6 text-[15px] font-medium bg-brand-strong text-white rounded-full hover:bg-[#2f3b2f] transition-opacity disabled:opacity-60">
               {loading ? 'Investindo...' : 'Investir agora'}
             </button>
           </div>
@@ -122,7 +122,7 @@ export function ModalInvestirSobra({ open, onOpenChange, disponivel, mes }: Moda
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[13px] font-medium text-[#3c4a3c]">{label}</label>
+      <label className="text-[13px] font-medium text-ink">{label}</label>
       {children}
     </div>
   )

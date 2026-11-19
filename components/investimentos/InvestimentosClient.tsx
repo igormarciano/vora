@@ -40,15 +40,15 @@ function InvestirSobraBanner({ mes, sobra, pendencia }: { mes: string; sobra: nu
 
   return (
     <>
-      <div className="bg-[#dce6dc] rounded-2xl p-5 mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="bg-brand-soft rounded-[20px] p-5 mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="w-11 h-11 rounded-xl bg-[#b4c9b4] flex items-center justify-center text-[20px] shrink-0">
           🌱
         </div>
         <div className="flex-1">
-          <p className="font-fraunces text-[17px] text-[#3c4a3c] leading-tight">
+          <p className="text-[17px] font-semibold tracking-[-0.02em] tabular text-ink leading-tight">
             Você tem {formatCurrency(disponivel)} de sobra {pendencia ? 'restante' : ''} este mês
           </p>
-          <p className="text-[13px] text-[#4f604f] mt-0.5">
+          <p className="text-[13px] text-brand-strong mt-0.5">
             Que tal transformar parte dessa sobra em investimento e fazer seu patrimônio crescer?
           </p>
         </div>
@@ -56,7 +56,7 @@ function InvestirSobraBanner({ mes, sobra, pendencia }: { mes: string; sobra: nu
           <button
             onClick={handleDispensar}
             disabled={dispensando}
-            className="text-[13px] text-[#6b7280] hover:text-[#3c4a3c] transition-colors px-2 py-2 disabled:opacity-60"
+            className="text-[13px] text-ink-2 hover:text-ink transition-colors px-2 py-2 disabled:opacity-60"
           >
             Agora não
           </button>
@@ -96,10 +96,10 @@ export function InvestimentosClient({ investimentos, mes, sobra, pendencia }: In
     <div className="w-full max-w-6xl px-4 sm:px-6 lg:px-10 py-6 lg:py-8">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="font-fraunces text-[32px] text-[#3c4a3c]">Investimentos</h1>
+          <h1 className="text-[32px] lg:text-[36px] font-bold tracking-[-0.025em] text-ink">Investimentos</h1>
           {total > 0 && (
-            <p className="text-[15px] text-[#6b7280] mt-1">
-              Patrimônio total: <span className="font-medium text-[#3c4a3c]">{formatCurrency(total)}</span>
+            <p className="text-[15px] text-ink-2 mt-1">
+              Patrimônio total: <span className="font-medium text-ink">{formatCurrency(total)}</span>
             </p>
           )}
         </div>
@@ -109,16 +109,16 @@ export function InvestimentosClient({ investimentos, mes, sobra, pendencia }: In
       <InvestirSobraBanner mes={mes} sobra={sobra} pendencia={pendencia} />
 
       {investimentos.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-[#ece4db] px-6 py-10 text-center">
+        <div className="bg-surface rounded-[20px] shadow-[var(--shadow-card)] px-6 py-10 text-center">
           <p className="text-[32px] mb-3">📊</p>
-          <p className="font-fraunces text-[18px] text-[#3c4a3c] mb-1">Nenhum investimento ainda</p>
-          <p className="text-[14px] text-[#9ca3af]">Adicione seus investimentos para acompanhar o patrimônio.</p>
+          <p className="text-[18px] font-semibold tracking-[-0.015em] text-ink mb-1">Nenhum investimento ainda</p>
+          <p className="text-[14px] text-ink-3">Adicione seus investimentos para acompanhar o patrimônio.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
           {/* Distribuição */}
-          <div className="bg-white rounded-2xl border border-[#ece4db] p-4">
-            <p className="text-[12px] font-medium text-[#6b7280] uppercase tracking-wide mb-3">Distribuição</p>
+          <div className="bg-surface rounded-[20px] shadow-[var(--shadow-card)] p-4">
+            <p className="text-[12px] font-medium text-ink-2 uppercase tracking-wide mb-3">Distribuição</p>
             <div className="flex gap-1.5 h-3 rounded-full overflow-hidden mb-3">
               {porCategoria.map(({ key, subtotal }) => (
                 <div
@@ -130,10 +130,10 @@ export function InvestimentosClient({ investimentos, mes, sobra, pendencia }: In
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               {porCategoria.map(({ key, cfg, subtotal }) => (
-                <div key={key} className="flex items-center gap-1.5 text-[12px] text-[#6b7280]">
+                <div key={key} className="flex items-center gap-1.5 text-[12px] text-ink-2">
                   <span>{cfg.emoji}</span>
                   <span>{cfg.label}</span>
-                  <span className="font-medium text-[#3c4a3c]">{Math.round((subtotal / total) * 100)}%</span>
+                  <span className="font-medium text-ink">{Math.round((subtotal / total) * 100)}%</span>
                 </div>
               ))}
             </div>
@@ -141,33 +141,33 @@ export function InvestimentosClient({ investimentos, mes, sobra, pendencia }: In
 
           {/* Lista por categoria */}
           {porCategoria.map(({ key, cfg, items, subtotal }) => (
-            <div key={key} className="bg-white rounded-2xl border border-[#ece4db] px-4">
-              <div className="flex items-center justify-between py-3 border-b border-[#f2ede7]">
+            <div key={key} className="bg-surface rounded-[20px] shadow-[var(--shadow-card)] px-4">
+              <div className="flex items-center justify-between py-3 border-b border-[rgb(60_74_60/0.08)]">
                 <div className="flex items-center gap-2">
                   <span className="text-[16px]">{cfg.emoji}</span>
-                  <span className="font-medium text-[14px] text-[#3c4a3c]">{cfg.label}</span>
+                  <span className="font-medium text-[14px] text-ink">{cfg.label}</span>
                 </div>
-                <span className="text-[14px] font-medium text-[#6b7280]">{formatCurrency(subtotal)}</span>
+                <span className="text-[14px] font-medium text-ink-2">{formatCurrency(subtotal)}</span>
               </div>
               {items.map(inv => (
-                <div key={inv.id} className="flex items-center gap-3 py-3.5 border-b border-[#f2ede7] last:border-0">
+                <div key={inv.id} className="flex items-center gap-3 py-3.5 border-b border-[rgb(60_74_60/0.08)] last:border-0">
                   <div className="flex-1 min-w-0">
-                    <span className="text-[15px] font-medium text-[#3c4a3c] block truncate">{inv.nome}</span>
+                    <span className="text-[15px] font-medium text-ink block truncate">{inv.nome}</span>
                     <div className="flex gap-3 mt-0.5 flex-wrap">
                       {inv.rentabilidade_anual && (
-                        <span className="text-[12px] text-[#9ca3af]">{inv.rentabilidade_anual}% a.a.</span>
+                        <span className="text-[12px] text-ink-3">{inv.rentabilidade_anual}% a.a.</span>
                       )}
                       {inv.liquidez && (
-                        <span className="text-[12px] text-[#9ca3af]">Liquidez: {inv.liquidez}</span>
+                        <span className="text-[12px] text-ink-3">Liquidez: {inv.liquidez}</span>
                       )}
                       {inv.vencimento && (
-                        <span className="text-[12px] text-[#9ca3af]">
+                        <span className="text-[12px] text-ink-3">
                           Vence: {new Date(inv.vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
                         </span>
                       )}
                     </div>
                   </div>
-                  <span className="text-[15px] font-medium text-[#3c4a3c] shrink-0">{formatCurrency(inv.valor)}</span>
+                  <span className="text-[15px] font-medium text-ink shrink-0">{formatCurrency(inv.valor)}</span>
                   <div className="flex items-center gap-0.5 shrink-0">
                     <FormInvestimento item={inv} />
                     <ModalDelete label={inv.nome} onConfirm={() => deletarInvestimento(inv.id)} />

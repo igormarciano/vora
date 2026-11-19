@@ -27,13 +27,13 @@ export default async function HistoricoPage() {
 
   return (
     <div className="w-full max-w-6xl px-4 sm:px-6 lg:px-10 py-6 lg:py-8">
-      <h1 className="font-fraunces text-[32px] text-[#3c4a3c] mb-6">Histórico</h1>
+      <h1 className="text-[32px] lg:text-[36px] font-bold tracking-[-0.025em] text-ink mb-6">Histórico</h1>
 
       {!snapshots || snapshots.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-[#ece4db] px-6 py-10 text-center">
+        <div className="bg-surface rounded-[20px] shadow-[var(--shadow-card)] px-6 py-10 text-center">
           <p className="text-[32px] mb-3">📅</p>
-          <p className="font-fraunces text-[18px] text-[#3c4a3c] mb-1">Nenhum histórico ainda</p>
-          <p className="text-[14px] text-[#9ca3af]">
+          <p className="text-[18px] font-semibold tracking-[-0.015em] text-ink mb-1">Nenhum histórico ainda</p>
+          <p className="text-[14px] text-ink-3">
             Os snapshots mensais aparecem aqui conforme você registra seus dados mês a mês.
           </p>
         </div>
@@ -42,9 +42,9 @@ export default async function HistoricoPage() {
           {snapshots.map(snap => {
             const cfg = snap.status ? STATUS_CONFIG[snap.status as keyof typeof STATUS_CONFIG] : null
             return (
-              <div key={snap.id} className="bg-white rounded-2xl border border-[#ece4db] p-5">
+              <div key={snap.id} className="bg-surface rounded-[20px] shadow-[var(--shadow-card)] p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-fraunces text-[18px] text-[#3c4a3c] capitalize">
+                  <h2 className="text-[18px] font-semibold tracking-[-0.015em] text-ink capitalize">
                     {nomeMes(snap.mes_referencia)}
                   </h2>
                   {cfg && (
@@ -66,8 +66,8 @@ export default async function HistoricoPage() {
                 </div>
 
                 {snap.saldo_livre !== 0 && (
-                  <p className="text-[12px] text-[#9ca3af] mt-3">
-                    Saldo livre após investimentos: <strong className="text-[#3c4a3c]">{formatCurrency(snap.saldo_livre)}</strong>
+                  <p className="text-[12px] text-ink-3 mt-3">
+                    Saldo livre após investimentos: <strong className="text-ink">{formatCurrency(snap.saldo_livre)}</strong>
                   </p>
                 )}
               </div>
@@ -82,9 +82,9 @@ export default async function HistoricoPage() {
 function MetricBox({ label, value, destaque }: { label: string; value: string; destaque?: 'positivo' | 'negativo' }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[11px] font-medium text-[#9ca3af] uppercase tracking-wide">{label}</span>
+      <span className="text-[11px] font-medium text-ink-3 uppercase tracking-wide">{label}</span>
       <span className={`text-[15px] font-medium ${
-        destaque === 'positivo' ? 'text-[#16a34a]' : destaque === 'negativo' ? 'text-[#dc2626]' : 'text-[#3c4a3c]'
+        destaque === 'positivo' ? 'text-[#16a34a]' : destaque === 'negativo' ? 'text-[#dc2626]' : 'text-ink'
       }`}>{value}</span>
     </div>
   )

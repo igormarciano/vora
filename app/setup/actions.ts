@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getMesReferencia } from '@/lib/engine'
+import { montarMes, type RespostasOnboarding } from '@/lib/onboarding'
 
 export async function marcarSetupCompleto() {
   const supabase = await createClient()
@@ -108,5 +109,78 @@ export async function salvarSetupInicial(data: {
   revalidatePath('/dashboard')
   revalidatePath('/controle')
   revalidatePath('/configuracoes')
+  return {}
+}
+
+// ── Onboarding "Monte seu mês" (redesign) ──────────────────────────────────────
+
+/**
+ * Grava o mês montado no onboarding. Recalcula tudo no servidor a partir das
+ * respostas (não confia em totais vindos do cliente). Cria, nesta ordem:
+ * cartões → receitas → gastos fixos (assinaturas vinculadas ao cartão principal)
+ * → estimativas de gastos variáveis → meta e setup_completo no perfil.
+ */
+export async function salvarOnboarding(respostas: RespostasOnboarding) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const mes = getMesReferencia()
+  const m = montarMes(respostas)
+  if (m.totalReceitas <= 0) return { error: 'Informe sua renda para continuar.' }
+
+  // Cartões
+  const cartaoPorBanco = new Map<string, string>()
+  if (m.cartoes.length > 0) {
+    const { data, error } = await supabase
+      .from('cartoes')
+      .insert(m.cartoes.map(c => ({ user_id: user.id, nome: c.nome, color: c.cor })))
+      .select('id')
+    if (error) return { error: error.message }
+    data?.forEach((row, i) => cartaoPorBanco.set(m.cartoes[i].bancoId, row.id))
+  }
+
+  const { error: eRec } = await supabase.from('receitas').insert(
+    m.receitas.map(r => ({ ...r, user_id: user.id, recorrente: true, mes_referencia: mes })),
+  )
+  if (eRec) return { error: eRec.message }
+
+  if (m.fixos.length > 0) {
+    const { error } = await supabase.from('gastos_fixos').insert(
+      m.fixos.map(f => ({
+        user_id: user.id,
+        nome: f.nome,
+        valor: f.valor,
+        categoria: f.categoria,
+        recorrente: true,
+        vinculado_cartao_id: f.bancoId ? cartaoPorBanco.get(f.bancoId) ?? null : null,
+        mes_referencia: mes,
+      })),
+    )
+    if (error) return { error: error.message }
+  }
+
+  if (m.variaveis.length > 0) {
+    const { error } = await supabase.from('gastos_variaveis').insert(
+      m.variaveis.map(v => ({
+        user_id: user.id,
+        nome: v.nome,
+        valor: v.valor,
+        categoria: v.categoria,
+        forma_pagamento: 'debito',
+        parcelado: false,
+        description: 'Estimativa criada no onboarding. Ajuste quando souber o valor real.',
+        mes_referencia: mes,
+      })),
+    )
+    if (error) return { error: error.message }
+  }
+
+  await supabase
+    .from('profiles')
+    .update({ meta_economia_percentual: respostas.meta, setup_completo: true })
+    .eq('id', user.id)
+
+  revalidatePath('/', 'layout')
   return {}
 }

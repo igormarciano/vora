@@ -43,24 +43,24 @@ export function ReceitasClient({ receitas }: ReceitasClientProps) {
 
       <Panel className="px-5">
         {receitas.length === 0 ? (
-          <p className="text-[14px] text-[#9ca3af] py-10 text-center">Nenhuma receita cadastrada ainda.</p>
+          <p className="text-[14px] text-ink-3 py-10 text-center">Nenhuma receita cadastrada ainda.</p>
         ) : (
           receitas.map(item => (
-            <div key={item.id} className="flex items-center gap-3 py-3.5 border-b border-[#f2ede7] last:border-0">
+            <div key={item.id} className="flex items-center gap-3 py-3.5 border-b border-[rgb(60_74_60/0.08)] last:border-0">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[15px] font-medium text-[#3c4a3c] truncate">{item.nome}</span>
-                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f2ede7] text-[#6b7280]">
+                  <span className="text-[15px] font-medium text-ink truncate">{item.nome}</span>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-fill text-ink-2">
                     {item.tipo === 'outros' ? (item.tipo_custom || 'Outros') : TIPO_LABEL[item.tipo]}
                   </span>
                 </div>
-                <p className="text-[12px] text-[#9ca3af] mt-0.5">
+                <p className="text-[12px] text-ink-3 mt-0.5">
                   {item.recorrente
                     ? item.duracao_meses ? `Recorrente por ${item.duracao_meses} meses` : 'Recorrente'
                     : 'Só este mês'}
                 </p>
               </div>
-              <span className="text-[15px] font-medium text-[#3c4a3c] shrink-0">{formatCurrency(item.valor)}</span>
+              <span className="text-[15px] font-medium text-ink shrink-0">{formatCurrency(item.valor)}</span>
               <div className="flex items-center gap-0.5 shrink-0">
                 <FormReceita item={item} onSuccess={() => {}} />
                 <ModalDelete label={item.nome} onConfirm={() => deletarReceita(item.id)} />

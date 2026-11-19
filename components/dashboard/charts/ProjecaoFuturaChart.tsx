@@ -23,10 +23,10 @@ export function ProjecaoFuturaChart({ projecao }: ProjecaoFuturaChartProps) {
   }))
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-[#ece4db]">
+    <div className="bg-surface rounded-[20px] p-6 shadow-[var(--shadow-card)]">
       <div className="mb-4">
-        <h2 className="font-fraunces text-[20px] text-[#3c4a3c]">Projeção futura</h2>
-        <p className="text-[13px] text-[#6b7280] mt-0.5">
+        <h2 className="text-[20px] font-semibold tracking-[-0.02em] tabular text-ink">Projeção futura</h2>
+        <p className="text-[13px] text-ink-2 mt-0.5">
           Como ficam suas receitas, gastos e economia nos próximos meses
         </p>
       </div>

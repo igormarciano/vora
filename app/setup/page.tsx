@@ -1,25 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { SetupWizard } from '@/components/setup/SetupWizard'
-import { getMesReferencia } from '@/lib/engine'
+import { Onboarding } from '@/components/onboarding/Onboarding'
 
 export default async function SetupPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Se o usuário já tem dados salvos, o setup foi concluído — redireciona para o dashboard
-  const mes = getMesReferencia()
-  const { data: receitas } = await supabase
-    .from('receitas')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('mes_referencia', mes)
-    .limit(1)
+  const { data: profile } = await supabase.from('profiles').select('nome, setup_completo').eq('id', user.id).maybeSingle()
 
-  if (receitas && receitas.length > 0) {
-    redirect('/dashboard')
-  }
+  // Quem já montou o mês vai direto para o painel. (Só olha setup_completo: o layout
+  // autenticado manda para cá quando ele é false, então checar outra coisa criaria loop.)
+  if (profile?.setup_completo) redirect('/dashboard')
 
-  return <SetupWizard />
+  const nome = profile?.nome || (user.user_metadata?.nome as string | undefined) || (user.user_metadata?.full_name as string | undefined) || null
+  return <Onboarding nome={nome} />
 }

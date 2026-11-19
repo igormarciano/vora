@@ -1,20 +1,37 @@
 'use client'
 
-import { useState } from 'react'
-import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
+import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { PasswordInput } from '@/components/ui/PasswordInput'
+import { AuthShell, AuthHeading } from '@/components/auth/AuthShell'
+import { GoogleButton } from '@/components/auth/GoogleButton'
+import { Button, Field, PasswordField, TextInput } from '@/components/vora/ui'
 
-type Mode = 'landing' | 'login' | 'esqueci'
+type Mode = 'boasvindas' | 'login' | 'esqueci'
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <Login />
+    </Suspense>
+  )
+}
+
+function Login() {
   const router = useRouter()
-  const [mode, setMode] = useState<Mode>('landing')
+  const params = useSearchParams()
+  // No mobile a primeira tela é de boas-vindas; no desktop o formulário já aparece.
+  const [mode, setMode] = useState<Mode>('boasvindas')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (params.get('error') === 'link_invalido') toast.error('Esse link expirou ou já foi usado. Entre de novo.')
+  }, [params])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -23,113 +40,87 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
     if (error) {
-      toast.error('Email ou senha incorretos.')
+      toast.error(error.message.includes('confirmed') ? 'Confirme seu e-mail antes de entrar.' : 'E-mail ou senha incorretos.')
       return
     }
     router.refresh()
     router.push('/dashboard')
   }
 
-  const subtitle =
-    mode === 'landing' ? 'Faça seu login pra acessar o app'
-    : mode === 'esqueci' ? 'Vamos te enviar um link para criar uma nova senha.'
-    : 'Entre com seu email e senha'
+  if (mode === 'esqueci') {
+    return (
+      <AuthShell>
+        <BackButton onClick={() => setMode('login')} />
+        <EsqueciSenha initialEmail={email} />
+      </AuthShell>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-[#f2ede7] flex flex-col relative overflow-hidden">
-      {/* Logo */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
-        <Image src="/images/login-logo-icon.svg" alt="Vora logo icon" width={28} height={28} className="object-contain" />
-        <Image src="/images/vora-wordmark.svg" alt="VORA" width={80} height={22} className="object-contain" />
+    <AuthShell>
+      {/* Boas-vindas: só no mobile */}
+      <div className={mode === 'boasvindas' ? 'lg:hidden' : 'hidden'}>
+        <AuthHeading
+          title="Veja seu mês antes dele acontecer."
+          subtitle="Clareza sobre o seu dinheiro, sem planilha e sem culpa."
+        />
+        <div className="flex flex-col gap-3">
+          <Button size="lg" block onClick={() => router.push('/cadastro')}>Criar conta grátis</Button>
+          <Button size="lg" block variant="ghost" onClick={() => setMode('login')}>Já tenho conta</Button>
+        </div>
+        <LegalNote />
       </div>
 
-      {/* Hero illustration */}
-      <div className="flex-1 flex items-center justify-center pt-20 pb-4">
-        <Image src="/images/login-hero.svg" alt="Ilustração Vora" width={280} height={280} className="object-contain" priority />
-      </div>
+      {/* Formulário: sempre no desktop, no mobile após "Já tenho conta" */}
+      <div className={mode === 'boasvindas' ? 'hidden lg:block' : ''}>
+        <div className="lg:hidden"><BackButton onClick={() => setMode('boasvindas')} /></div>
+        <AuthHeading title="Bem-vindo de volta" subtitle="Entre para ver como seu mês está." />
 
-      {/* Bottom content */}
-      <div className="bg-[#f2ede7] px-[30px] pt-[40px] pb-[48px] flex flex-col gap-[29px]">
-        <div className="flex flex-col gap-[15px]">
-          <h1 className="font-fraunces text-[32px] text-[#3c4a3c] leading-tight">
-            {mode === 'esqueci' ? 'Esqueceu a senha?' : 'Veja seu mês antes dele acontecer.'}
-          </h1>
-          <p className="text-[16px] text-[#3c4a3c] font-normal leading-normal">{subtitle}</p>
+        <div className="flex flex-col gap-4">
+          <GoogleButton />
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <Field label="E-mail">
+              <TextInput type="email" autoComplete="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="voce@email.com" required />
+            </Field>
+            <Field
+              label="Senha"
+              action={<button type="button" onClick={() => setMode('esqueci')} className="text-[13px] font-medium text-brand hover:text-brand-strong">Esqueci a senha</button>}
+            >
+              <PasswordField autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Sua senha" required />
+            </Field>
+            <Button type="submit" size="lg" block loading={loading} className="mt-2">Entrar</Button>
+          </form>
         </div>
 
-        {mode === 'esqueci' ? (
-          <EsqueciSenha onBack={() => setMode('login')} />
-        ) : mode === 'landing' ? (
-          <div className="flex flex-col gap-[12px]">
-            <button
-              onClick={() => setMode('login')}
-              className="w-full bg-[#8faf8f] text-[#f9f7f4] font-fraunces text-[16px] py-[12px] px-[26px] text-center transition-opacity hover:opacity-90 active:opacity-80"
-            >
-              Fazer login
-            </button>
-            <button
-              onClick={() => router.push('/cadastro')}
-              className="w-full bg-[#dce6dc] text-[#4f604f] font-fraunces text-[16px] py-[12px] px-[26px] text-center transition-opacity hover:opacity-90 active:opacity-80"
-            >
-              Criar conta
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleLogin} className="flex flex-col gap-[12px]">
-            <div className="flex flex-col gap-[6px]">
-              <label className="text-[14px] text-[#3c4a3c] font-medium">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-                required
-                className="w-full border border-[#ece4db] bg-white text-[#3c4a3c] px-4 py-3 text-[16px] outline-none focus:border-[#8faf8f] transition-colors"
-              />
-            </div>
-            <div className="flex flex-col gap-[6px]">
-              <div className="flex items-center justify-between">
-                <label className="text-[14px] text-[#3c4a3c] font-medium">Senha</label>
-                <button
-                  type="button"
-                  onClick={() => setMode('esqueci')}
-                  className="text-[13px] text-[#8faf8f] hover:underline"
-                >
-                  Esqueci minha senha
-                </button>
-              </div>
-              <PasswordInput
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#8faf8f] text-[#f9f7f4] font-fraunces text-[16px] py-[12px] px-[26px] text-center transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-60 mt-1"
-            >
-              {loading ? 'Entrando...' : 'Entrar'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('landing')}
-              className="text-[14px] text-[#6b7280] text-center underline"
-            >
-              Voltar
-            </button>
-          </form>
-        )}
+        <p className="mt-8 text-center text-[14px] text-ink-2">
+          Ainda não tem conta?{' '}
+          <Link href="/cadastro" className="font-semibold text-brand-strong hover:underline">Criar conta grátis</Link>
+        </p>
       </div>
-    </div>
+    </AuthShell>
   )
 }
 
-// ── Sub-componente de recuperação de senha ─────────────────────────────────────
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="-ml-2 mb-4 inline-flex items-center gap-0.5 h-9 pr-3 pl-1 rounded-full text-[15px] font-medium text-brand hover:bg-fill">
+      <ChevronLeft size={20} /> Voltar
+    </button>
+  )
+}
 
-function EsqueciSenha({ onBack }: { onBack: () => void }) {
-  const [email, setEmail] = useState('')
+function LegalNote() {
+  return (
+    <p className="mt-6 text-center text-[12px] text-ink-3 leading-relaxed">
+      Ao continuar, você concorda com os{' '}
+      <Link href="/termos" className="underline">Termos</Link> e a{' '}
+      <Link href="/privacidade" className="underline">Política de Privacidade</Link>.
+    </p>
+  )
+}
+
+function EsqueciSenha({ initialEmail }: { initialEmail: string }) {
+  const [email, setEmail] = useState(initialEmail)
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
 
@@ -142,7 +133,7 @@ function EsqueciSenha({ onBack }: { onBack: () => void }) {
     })
     setLoading(false)
     if (error) {
-      toast.error('Não foi possível enviar o email. Tente novamente.')
+      toast.error('Não foi possível enviar o e-mail. Tente novamente.')
       return
     }
     setSent(true)
@@ -150,43 +141,22 @@ function EsqueciSenha({ onBack }: { onBack: () => void }) {
 
   if (sent) {
     return (
-      <div className="flex flex-col gap-[16px]">
-        <div className="flex flex-col gap-[6px]">
-          <p className="text-[16px] text-[#3c4a3c]">
-            Enviamos um link para <strong>{email}</strong>. Clique nele para criar uma nova senha.
-          </p>
-          <p className="text-[13px] text-[#6b7280]">Verifique também a caixa de spam.</p>
-        </div>
-        <button onClick={onBack} className="text-[14px] text-[#6b7280] text-center underline">
-          Voltar ao login
-        </button>
-      </div>
+      <>
+        <AuthHeading title="Confira seu e-mail" subtitle={<>Enviamos um link para <strong className="text-ink">{email}</strong>. Ele abre a tela para criar uma nova senha.</>} />
+        <p className="text-[13px] text-ink-3">Não chegou? Veja a caixa de spam ou tente de novo em alguns minutos.</p>
+      </>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-[12px]">
-      <div className="flex flex-col gap-[6px]">
-        <label className="text-[14px] text-[#3c4a3c] font-medium">Email da sua conta</label>
-        <input
-          type="email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          placeholder="seu@email.com"
-          required
-          className="w-full border border-[#ece4db] bg-white text-[#3c4a3c] px-4 py-3 text-[16px] outline-none focus:border-[#8faf8f] transition-colors"
-        />
-      </div>
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-[#8faf8f] text-[#f9f7f4] font-fraunces text-[16px] py-[12px] px-[26px] text-center transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-60 mt-1"
-      >
-        {loading ? 'Enviando...' : 'Enviar link de recuperação'}
-      </button>
-      <button type="button" onClick={onBack} className="text-[14px] text-[#6b7280] text-center underline">
-        Voltar ao login
-      </button>
-    </form>
+    <>
+      <AuthHeading title="Esqueceu a senha?" subtitle="Informe o e-mail da sua conta e enviamos um link para criar uma nova." />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Field label="E-mail">
+          <TextInput type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="voce@email.com" required />
+        </Field>
+        <Button type="submit" size="lg" block loading={loading} className="mt-2">Enviar link</Button>
+      </form>
+    </>
   )
 }

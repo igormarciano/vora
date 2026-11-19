@@ -49,15 +49,15 @@ export function ModalAdicionarGasto({ cartoes, customCategories = [], defaultTip
       {variant === 'primary' ? (
         <button
           onClick={() => setOpen(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-[14px] text-white transition-opacity hover:opacity-90 shadow-sm"
-          style={{ background: 'linear-gradient(135deg, #57cc99, #38a3a5)' }}
+          className="w-full sm:w-auto flex items-center justify-center gap-2 h-11 px-5 rounded-full font-medium text-[14px] text-white transition-opacity hover:opacity-90 shadow-sm"
+          style={{ background: '#3c4a3c' }}
         >
           <Plus size={18} /><span>{label}</span>
         </button>
       ) : (
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-2 text-[14px] font-medium text-[#8faf8f] hover:text-[#4f604f] transition-colors"
+          className="flex items-center gap-2 text-[14px] font-medium text-brand hover:text-brand-strong transition-colors"
         >
           <Plus size={16} /><span>{label}</span>
         </button>
@@ -65,34 +65,34 @@ export function ModalAdicionarGasto({ cartoes, customCategories = [], defaultTip
 
       {/* Etapa de seleção de tipo */}
       {open && tipo === null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/30" onClick={handleClose} />
-          <div className="relative bg-white rounded-2xl p-6 shadow-lg max-w-md w-full mx-4">
-            <h3 className="font-fraunces text-[22px] text-[#3c4a3c] mb-1">Novo gasto</h3>
-            <p className="text-[14px] text-[#6b7280] mb-5">Esse gasto se repete todo mês ou varia?</p>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in" onClick={handleClose} />
+          <div className="relative bg-canvas sm:bg-white w-full sm:max-w-md sm:mx-4 rounded-t-[28px] sm:rounded-[24px] p-6 pb-[max(env(safe-area-inset-bottom),24px)] sm:pb-6 shadow-[var(--shadow-float)] animate-in slide-in-from-bottom sm:slide-in-from-bottom-4 sm:fade-in duration-300">
+            <h3 className="text-[22px] font-bold tracking-[-0.02em] text-ink mb-1">Novo gasto</h3>
+            <p className="text-[14px] text-ink-2 mb-5">Esse gasto se repete todo mês ou varia?</p>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setTipo('fixo')}
-                className="flex flex-col items-center gap-2 p-5 rounded-2xl border border-[#ece4db] hover:border-[#8faf8f] hover:bg-[#f2ede7] transition-colors text-center"
+                className="flex flex-col items-center gap-2 p-5 rounded-[20px] border border-hairline hover:border-[#8faf8f] hover:bg-fill transition-colors text-center"
               >
-                <div className="w-11 h-11 rounded-xl bg-[#dce6dc] flex items-center justify-center">
-                  <Repeat size={20} className="text-[#3c4a3c]" />
+                <div className="w-11 h-11 rounded-xl bg-brand-soft flex items-center justify-center">
+                  <Repeat size={20} className="text-ink" />
                 </div>
-                <span className="text-[15px] font-medium text-[#3c4a3c]">Fixo</span>
-                <span className="text-[12px] text-[#9ca3af]">Aluguel, internet, assinaturas...</span>
+                <span className="text-[15px] font-medium text-ink">Fixo</span>
+                <span className="text-[12px] text-ink-3">Aluguel, internet, assinaturas...</span>
               </button>
               <button
                 onClick={() => setTipo('variavel')}
-                className="flex flex-col items-center gap-2 p-5 rounded-2xl border border-[#ece4db] hover:border-[#8faf8f] hover:bg-[#f2ede7] transition-colors text-center"
+                className="flex flex-col items-center gap-2 p-5 rounded-[20px] border border-hairline hover:border-[#8faf8f] hover:bg-fill transition-colors text-center"
               >
-                <div className="w-11 h-11 rounded-xl bg-[#dce6dc] flex items-center justify-center">
-                  <ShoppingBag size={20} className="text-[#3c4a3c]" />
+                <div className="w-11 h-11 rounded-xl bg-brand-soft flex items-center justify-center">
+                  <ShoppingBag size={20} className="text-ink" />
                 </div>
-                <span className="text-[15px] font-medium text-[#3c4a3c]">Variável</span>
-                <span className="text-[12px] text-[#9ca3af]">Mercado, lazer, compras...</span>
+                <span className="text-[15px] font-medium text-ink">Variável</span>
+                <span className="text-[12px] text-ink-3">Mercado, lazer, compras...</span>
               </button>
             </div>
-            <button onClick={handleClose} className="w-full mt-5 text-[14px] text-[#6b7280] hover:text-[#3c4a3c] text-center transition-colors">
+            <button onClick={handleClose} className="w-full mt-5 text-[14px] text-ink-2 hover:text-ink text-center transition-colors">
               Cancelar
             </button>
           </div>

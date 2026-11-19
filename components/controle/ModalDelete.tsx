@@ -29,25 +29,25 @@ export function ModalDelete({ label, onConfirm }: ModalDeleteProps) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="p-1.5 rounded text-[#6b7280] hover:text-[#ef4444] hover:bg-[#fef2f2] transition-colors"
+        className="p-1.5 rounded text-ink-2 hover:text-[#ef4444] hover:bg-[#fef2f2] transition-colors"
         title="Excluir"
       >
         <Trash2 size={15} />
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} />
-          <div className="relative bg-white rounded-2xl p-6 shadow-lg max-w-sm w-full mx-4 flex flex-col gap-4">
-            <h3 className="font-fraunces text-[20px] text-[#3c4a3c]">Confirmar exclusão</h3>
-            <p className="text-[15px] text-[#6b7280] leading-relaxed">
-              Tem certeza que quer remover <strong className="text-[#3c4a3c]">{label}</strong>?
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in" onClick={() => setOpen(false)} />
+          <div className="relative bg-canvas sm:bg-white w-full sm:max-w-sm sm:mx-4 rounded-t-[28px] sm:rounded-[24px] p-6 pb-[max(env(safe-area-inset-bottom),24px)] sm:pb-6 shadow-[var(--shadow-float)] flex flex-col gap-4 animate-in slide-in-from-bottom sm:fade-in duration-300">
+            <h3 className="text-[20px] font-semibold tracking-[-0.02em] tabular text-ink">Confirmar exclusão</h3>
+            <p className="text-[15px] text-ink-2 leading-relaxed">
+              Tem certeza que quer remover <strong className="text-ink">{label}</strong>?
               Essa ação não pode ser desfeita.
             </p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setOpen(false)}
-                className="px-4 py-2 text-[14px] text-[#6b7280] hover:text-[#3c4a3c] transition-colors"
+                className="px-4 py-2 text-[14px] text-ink-2 hover:text-ink transition-colors"
               >
                 Cancelar
               </button>

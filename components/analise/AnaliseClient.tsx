@@ -66,7 +66,7 @@ export function AnaliseClient(props: AnaliseClientProps) {
             : 'Você já está na meta. Ainda assim, estes pontos merecem atenção:'}
         >
           {sugestoes.length === 0 ? (
-            <Panel className="px-5 py-8 text-center text-[14px] text-[#9ca3af]">
+            <Panel className="px-5 py-8 text-center text-[14px] text-ink-3">
               Nada fora do padrão neste mês. Continue registrando seus gastos para a análise ficar mais precisa.
             </Panel>
           ) : (
@@ -75,16 +75,16 @@ export function AnaliseClient(props: AnaliseClientProps) {
                 const Icon = ICONE[s.tipo]
                 return (
                   <Panel key={i} className="px-5 py-4 flex gap-4 items-start">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${s.tipo === 'acima_media' ? 'bg-[#fdecea] text-[#dc2626]' : 'bg-[#dce6dc] text-[#3c4a3c]'}`}>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${s.tipo === 'acima_media' ? 'bg-[#fdecea] text-[#dc2626]' : 'bg-brand-soft text-ink'}`}>
                       <Icon size={17} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[15px] font-medium text-[#3c4a3c]">{s.titulo}</p>
-                      <p className="text-[13px] text-[#6b7280] mt-0.5">{s.descricao}</p>
+                      <p className="text-[15px] font-medium text-ink">{s.titulo}</p>
+                      <p className="text-[13px] text-ink-2 mt-0.5">{s.descricao}</p>
                     </div>
                     {s.economia != null && s.economia > 0 && (
                       <div className="text-right shrink-0">
-                        <p className="text-[11px] text-[#9ca3af] uppercase tracking-wide">Libera até</p>
+                        <p className="text-[11px] text-ink-3 uppercase tracking-wide">Libera até</p>
                         <p className="text-[15px] font-medium text-[#16a34a]">{formatCurrency(s.economia)}</p>
                       </div>
                     )}
@@ -99,17 +99,17 @@ export function AnaliseClient(props: AnaliseClientProps) {
         <Section className="lg:col-span-2" title="Maiores gastos do mês" description="Os itens que mais pesam, individualmente.">
           <Panel className="px-5">
             {maioresGastos.length === 0 ? (
-              <p className="text-[14px] text-[#9ca3af] py-8 text-center">Sem gastos neste mês.</p>
+              <p className="text-[14px] text-ink-3 py-8 text-center">Sem gastos neste mês.</p>
             ) : maioresGastos.map((g, i) => (
-              <div key={i} className="flex items-center gap-3 py-3 border-b border-[#f2ede7] last:border-0">
-                <span className="w-5 text-[12px] text-[#9ca3af]">{i + 1}</span>
+              <div key={i} className="flex items-center gap-3 py-3 border-b border-[rgb(60_74_60/0.08)] last:border-0">
+                <span className="w-5 text-[12px] text-ink-3">{i + 1}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-medium text-[#3c4a3c] truncate">{g.nome}</p>
-                  <p className="text-[12px] text-[#9ca3af] truncate">{g.categoria} · {g.tipo}</p>
+                  <p className="text-[14px] font-medium text-ink truncate">{g.nome}</p>
+                  <p className="text-[12px] text-ink-3 truncate">{g.categoria} · {g.tipo}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-[14px] font-medium text-[#3c4a3c]">{formatCurrency(g.valor)}</p>
-                  {receitaMes > 0 && <p className="text-[11px] text-[#9ca3af]">{Math.round((g.valor / receitaMes) * 100)}% da renda</p>}
+                  <p className="text-[14px] font-medium text-ink">{formatCurrency(g.valor)}</p>
+                  {receitaMes > 0 && <p className="text-[11px] text-ink-3">{Math.round((g.valor / receitaMes) * 100)}% da renda</p>}
                 </div>
               </div>
             ))}
@@ -130,16 +130,16 @@ export function AnaliseClient(props: AnaliseClientProps) {
               return (
                 <div key={c.categoria}>
                   <div className="flex items-baseline justify-between gap-2 mb-1.5">
-                    <span className="text-[13px] font-medium text-[#3c4a3c] truncate">
+                    <span className="text-[13px] font-medium text-ink truncate">
                       {c.categoria}
-                      {c.discricionaria && <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-[#f2ede7] text-[#6b7280] font-normal">escolha</span>}
+                      {c.discricionaria && <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-fill text-ink-2 font-normal">escolha</span>}
                     </span>
-                    <span className="text-[13px] text-[#3c4a3c] shrink-0">
+                    <span className="text-[13px] text-ink shrink-0">
                       {formatCurrency(c.atual)}
-                      {c.media != null && <span className="text-[#9ca3af]"> · média {formatCurrency(c.media)}</span>}
+                      {c.media != null && <span className="text-ink-3"> · média {formatCurrency(c.media)}</span>}
                     </span>
                   </div>
-                  <div className="relative h-2 rounded-full bg-[#f2ede7]">
+                  <div className="relative h-2 rounded-full bg-fill">
                     <div className="h-full rounded-full" style={{ width: `${(c.atual / maxCategoria) * 100}%`, backgroundColor: acima ? '#dc2626' : '#8faf8f' }} />
                     {c.media != null && (
                       <div className="absolute -top-1 w-0.5 h-4 bg-[#3c4a3c]" style={{ left: `calc(${(c.media / maxCategoria) * 100}% - 1px)` }} />
@@ -194,14 +194,14 @@ export function AnaliseClient(props: AnaliseClientProps) {
             {eventos.length === 0 ? (
               <div className="py-10 text-center">
                 <CalendarClock size={24} className="mx-auto text-[#a5bfa5] mb-2" />
-                <p className="text-[14px] text-[#9ca3af]">Nenhuma parcela ou conta com prazo termina nos próximos 12 meses.</p>
+                <p className="text-[14px] text-ink-3">Nenhuma parcela ou conta com prazo termina nos próximos 12 meses.</p>
               </div>
             ) : (
               <ol className="relative">
                 {agruparPorMes(eventos).map(([m, evs]) => (
-                  <li key={m} className="py-3 border-b border-[#f2ede7] last:border-0">
+                  <li key={m} className="py-3 border-b border-[rgb(60_74_60/0.08)] last:border-0">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="flex items-center gap-2 text-[13px] font-medium text-[#3c4a3c] capitalize">
+                      <span className="flex items-center gap-2 text-[13px] font-medium text-ink capitalize">
                         <TrendingDown size={15} className="text-[#16a34a]" /> A partir de {formatarMesReferencia(m)}
                       </span>
                       <span className="text-[13px] font-medium text-[#16a34a]">
@@ -209,8 +209,8 @@ export function AnaliseClient(props: AnaliseClientProps) {
                       </span>
                     </div>
                     {evs.map((e, i) => (
-                      <p key={i} className="text-[12px] text-[#6b7280] pl-6 flex justify-between gap-2">
-                        <span className="truncate">{e.nome} <span className="text-[#9ca3af]">({e.tipo === 'parcela' ? e.detalhe : `conta fixa, ${e.detalhe}`})</span></span>
+                      <p key={i} className="text-[12px] text-ink-2 pl-6 flex justify-between gap-2">
+                        <span className="truncate">{e.nome} <span className="text-ink-3">({e.tipo === 'parcela' ? e.detalhe : `conta fixa, ${e.detalhe}`})</span></span>
                         <span className="shrink-0">{formatCurrency(e.valor)}</span>
                       </p>
                     ))}

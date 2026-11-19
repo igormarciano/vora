@@ -2,6 +2,11 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Fontes de classes explícitas (independe do diretório de onde o servidor sobe) */
+@source "../app";
+@source "../components";
+@source "../lib";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -61,12 +66,31 @@
   --color-status-bom: #57cc99;
   --color-status-atencao: #f59e0b;
   --color-status-ruim: #ef4444;
+
+  /* Redesign 2026: tokens semânticos (Apple-like, identidade Vora) */
+  --color-canvas: #f5f4f0;
+  --color-surface: #ffffff;
+  --color-surface-2: #faf9f6;
+  --color-ink: #1d261d;
+  --color-ink-2: #4a564a;
+  --color-ink-3: #8a918a;
+  --color-hairline: rgb(60 74 60 / 0.10);
+  --color-fill: rgb(60 74 60 / 0.06);
+  --color-brand: #5f8a62;
+  --color-brand-strong: #3c4a3c;
+  --color-brand-soft: #e3ebe2;
+  --color-sand: #efe9e1;
+  --color-positive: #2f8f5b;
+  --color-negative: #d4483b;
+  --color-warning: #c9861a;
+  --shadow-card: 0 1px 2px rgb(29 38 29 / 0.04), 0 4px 16px -6px rgb(29 38 29 / 0.08);
+  --shadow-float: 0 12px 40px -12px rgb(29 38 29 / 0.25);
 }
 
 :root {
-  --radius: 0.5rem;
-  --background: #ffffff;
-  --foreground: #1a1a2e;
+  --radius: 0.875rem;
+  --background: #f5f4f0;
+  --foreground: #1d261d;
   --card: #ffffff;
   --card-foreground: #1a1a2e;
   --popover: #ffffff;
@@ -107,6 +131,37 @@ body {
   color: var(--foreground);
   font-family: var(--font-inter), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'cv11', 'ss01';
+  letter-spacing: -0.006em;
+}
+
+::selection { background: #dce6dc; color: #1d261d; }
+
+:where(a, button, input, select, textarea, [role="button"]):focus-visible {
+  outline: 3px solid rgb(95 138 98 / 0.35);
+  outline-offset: 2px;
+}
+
+input, select, textarea { font-size: 16px; } /* evita zoom automático no iOS */
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Superfície translúcida estilo Apple (barras e sidebar) */
+.glass {
+  background: rgb(250 249 246 / 0.78);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+.pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+.pt-safe { padding-top: max(env(safe-area-inset-top), 0px); }
+
+@keyframes vora-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.animate-rise { animation: vora-rise .45s cubic-bezier(.2,.8,.2,1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
 .font-fraunces {

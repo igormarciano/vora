@@ -38,15 +38,15 @@ export function ComposicaoFinanceiraChart({ dados }: ComposicaoFinanceiraChartPr
   const semDados = data.length === 0
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-[#ece4db]">
+    <div className="bg-surface rounded-[20px] p-6 shadow-[var(--shadow-card)]">
       <div className="mb-4">
-        <h2 className="font-fraunces text-[18px] text-[#3c4a3c]">Composição financeira</h2>
-        <p className="text-[13px] text-[#6b7280] mt-0.5">
+        <h2 className="text-[18px] font-semibold tracking-[-0.015em] text-ink">Composição financeira</h2>
+        <p className="text-[13px] text-ink-2 mt-0.5">
           Para onde o dinheiro do mês está indo
         </p>
       </div>
       {semDados ? (
-        <div className="h-[240px] flex items-center justify-center text-[13px] text-[#9ca3af]">
+        <div className="h-[240px] flex items-center justify-center text-[13px] text-ink-3">
           Adicione receitas e gastos para ver a composição do mês.
         </div>
       ) : (

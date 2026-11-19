@@ -42,7 +42,7 @@ export function CartaoDetalheClient({
 
   return (
     <Page>
-      <Link href={voltar} className="inline-flex items-center gap-1.5 text-[13px] text-[#6b7280] hover:text-[#3c4a3c] transition-colors mb-4">
+      <Link href={voltar} className="inline-flex items-center gap-1.5 text-[13px] text-ink-2 hover:text-ink transition-colors mb-4">
         <ArrowLeft size={15} /> Todos os cartões
       </Link>
 
@@ -124,7 +124,7 @@ export function CartaoDetalheClient({
 
       {total === 0 && (
         <div
-          className="mt-6 rounded-2xl border px-5 py-4 flex items-center gap-3 text-[13px] text-[#4f604f]"
+          className="mt-6 rounded-[20px] border px-5 py-4 flex items-center gap-3 text-[13px] text-brand-strong"
           style={{ backgroundColor: corComOpacidade(cor, 0.08), borderColor: corComOpacidade(cor, 0.25) }}
         >
           <CreditCard size={16} className="shrink-0" />
@@ -136,5 +136,5 @@ export function CartaoDetalheClient({
 }
 
 function Empty({ text }: { text: string }) {
-  return <p className="text-[14px] text-[#9ca3af] py-8 text-center">{text}</p>
+  return <p className="text-[14px] text-ink-3 py-8 text-center">{text}</p>
 }
